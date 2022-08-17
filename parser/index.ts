@@ -155,7 +155,9 @@ function formatDeclarations(
         )}"`
       : `data-tooltip="Reference ${name} not found"`
 
-    const escapedPath = packageName ? `${packageName}/${escape(name)}` : name
+    const escapedPath = packageName
+      ? `${escape(packageName)}/${escape(name)}`
+      : name
 
     newContents = newContents.replaceAll(
       `[[${name}]]`,
