@@ -1,4 +1,4 @@
-import { NATION } from 'law.nation3.eth/$nation@0.1'
+import { NATION } from 'https://raw.githubusercontent.com/nation3/linked-markdown/main/examples/NATION.linked.md'
 
 ---
 

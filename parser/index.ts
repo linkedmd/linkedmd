@@ -1,5 +1,7 @@
 // @ts-ignore
 import parseStaticImports from 'parse-static-imports'
+// @ts-ignore
+import parseImports from 'parse-es6-imports'
 import yaml from 'js-yaml'
 import { marked } from 'marked'
 
@@ -23,9 +25,9 @@ type Import = {
   defaultImport?: string
   namedImports?: Array<{
     name: string
-    alias: string
+    value: string
   }>
-  moduleName: string
+  fromModule: string
 }
 
 type Declaration = {
@@ -38,27 +40,43 @@ function error(message: string) {
   console.error(`LinkedMarkdown compiler: ${message}`)
 }
 
+async function fetchPackage(uri: string): Promise<string> {
+  try {
+    const req = await fetch(uri)
+    const file = await req.text()
+    return file
+  } catch (e) {
+    error(`Fetching package was impossible (URI ${uri})`)
+    return ''
+  }
+}
+
 async function resolveImports(code: string): Promise<any> {
-  const imports = parseStaticImports(code)
+  const imports = parseImports(code)
   const importedDeclarations = {}
   await Promise.all(
     imports.map(async (unresolvedImport: Import) => {
-      /*const package = await fetch(unresolvedImport.packageURI)
-      const file = await package.text()*/
-      const importedFile = new LinkedMarkdown(importNATION)
+      const file = await fetchPackage(unresolvedImport.fromModule)
+      const importedFile = new LinkedMarkdown(file)
       await importedFile.parse()
       unresolvedImport.namedImports?.map((namedImport: any) => {
+        if (!(namedImport.name in importedFile.data.declarations)) {
+          error(
+            `Cannot find ${namedImport.value} in ${unresolvedImport.fromModule}`
+          )
+          return
+        }
         // @ts-ignore
-        importedDeclarations[namedImport.alias] = {
+        importedDeclarations[namedImport.value] = {
           value: importedFile.data.declarations[namedImport.name].value,
-          packageName: unresolvedImport.moduleName,
+          packageName: unresolvedImport.fromModule,
         }
       })
       Object.keys(importedFile.data.declarations).map((name) => {
         // @ts-ignore
-        importedDeclarations[`${unresolvedImport.moduleName}/${name}`] = {
+        importedDeclarations[`${unresolvedImport.fromModule}/${name}`] = {
           value: importedFile.data.declarations[name].value,
-          packageName: unresolvedImport.moduleName,
+          packageName: unresolvedImport.fromModule,
           remoteScope: true,
         }
       })
@@ -66,13 +84,6 @@ async function resolveImports(code: string): Promise<any> {
   )
   return importedDeclarations
 }
-
-const importNATION = `
----
-NATION: ERC20 token living in the Ethereum blockchain at [[Address]]
-Address: '0x333A4823466879eeF910A04D473505da62142069'
----
-`
 
 const Link = ({ href, text }: { href: string; text: string }) =>
   `<a href="${href}" rel="noreferrer" target="_blank">${text}</a>`

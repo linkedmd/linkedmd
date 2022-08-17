@@ -34,6 +34,11 @@ marked@^4.0.18:
   resolved "https://registry.yarnpkg.com/marked/-/marked-4.0.18.tgz#cd0ac54b2e5610cfb90e8fd46ccaa8292c9ed569"
   integrity sha512-wbLDJ7Zh0sqA0Vdg6aqlbT+yPxqLblpAZh1mK2+AO2twQkPywvvqQNfEPVwSSRjZ7dZcdeVBIAgiO7MMp3Dszw==
 
+parse-es6-imports@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/parse-es6-imports/-/parse-es6-imports-1.0.1.tgz#fbfea61afcd94435c7f697fc439616c18853771b"
+  integrity sha512-WheMSatJ69ItiKNFTYYzYIbntAT4DC0+dM+a64bLQi6dxxqI5elYqJK9oCo5AYlDxeTo/bimmdo5kv4IxJy34A==
+
 parse-static-imports@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/parse-static-imports/-/parse-static-imports-1.1.0.tgz#ae2f18f18da1a993080ae406a5219455c0bbad5d"

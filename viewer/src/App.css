@@ -24,6 +24,7 @@ table {
 
 textarea {
   padding: 1rem;
+  height: 100vh !important;
 }
 
 .LM-ref span {
