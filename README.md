@@ -5,20 +5,22 @@ Linked Markdown is a superset of [Markdown](https://daringfireball.net/projects/
 This is an example Linked Markdown document:
 
 ```markdown
-import { $NATION } from 'law.nation3.eth/$nation@0.1'
+import { NATION } from 'https://raw.githubusercontent.com/nation3/linked-markdown/main/examples/NATION.linked.md'
 
 ---
 
-Domain Name: test.com
-Seller: '0x312'
-Purchaser: '0x121'
+Domain Name: google.com
+Seller: '0xbac3ab60a1643e5f5de8eb62cb4bb232711d9dcd'
+Purchaser: luisc.eth
 Registrar: GoDaddy
-Purchase Price: 12 [[$NATION]]
-Deadline: 2010-02-11
+Purchase Price: 12 [[NATION]]
+Deadline: 2022-02-11
 
 ---
 
-This [[Domain Name]] Sale and Ownership Transfer Agreement (“Agreement”) is entered into between [[Seller]] and [[Purchaser]]. This agreement sets forth all terms and conditions under which [[Seller]] agrees to sell and transfer to [[Purchaser]] all ownership rights in and to the domain name [[Domain Name]] including any and all trademark rights and attendant goodwill associated therewith.
+# Domain Name Sale and Ownership Transfer Agreement
+
+This [[Domain Name]] Sale and Ownership Transfer Agreement ("Agreement”) is entered into between [[Seller]] and [[Purchaser]]. This agreement sets forth all terms and conditions under which [[Seller]] agrees to sell and transfer to [[Purchaser]] all ownership rights in and to the domain name [[Domain Name]] including any and all trademark rights and attendant goodwill associated therewith.
 
 ## [[Seller]] and the [[Purchaser]] hereby agree as follows:
 
@@ -29,7 +31,6 @@ This [[Domain Name]] Sale and Ownership Transfer Agreement (“Agreement”) is 
 5. Governing Law. This Agreement is made under and shall be governed by and interpreted in accordance with the laws of Nation3, without regard to that state’s choice of law principles, which may direct the application of the laws of another jurisdiction.
 6. Entire Agreement. This Agreement constitutes and contains the entire agreement between the parties with respect to the subject matter herein and supersedes any prior oral or written agreements. This Agreement cannot be changed, modified, amended, or supplemented, except in writing signed by all parties hereto.
    IN WITNESS WHEREOF, [[Seller]] and [[Purchaser]] have caused this Agreement to be executed by their duly authorized representatives.
-
 ```
 
 A Linked Markdown document has 3 sections:
