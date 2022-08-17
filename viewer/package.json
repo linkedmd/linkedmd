@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "css-tooltip": "^0.3.4",
+    "linked-markdown-parser": "^0.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",

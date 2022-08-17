@@ -1,6 +1,4 @@
 // @ts-ignore
-import parseStaticImports from 'parse-static-imports'
-// @ts-ignore
 import parseImports from 'parse-es6-imports'
 import yaml from 'js-yaml'
 import { marked } from 'marked'
