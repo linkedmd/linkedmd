@@ -1,11 +1,18 @@
 {
+  "name": "linked-markdown-parser",
+  "version": "0.1.0",
   "type": "module",
   "dependencies": {
     "js-yaml": "^4.1.0",
     "marked": "^4.0.18",
-    "parse-imports": "^1.1.0",
+    "parse-static-imports": "^1.1.0",
     "typescript": "^4.7.4"
   },
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
+  },
+  "main": "index.js",
   "devDependencies": {
     "@types/js-yaml": "^4.0.5",
     "@types/marked": "^4.0.3",

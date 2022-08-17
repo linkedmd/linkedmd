@@ -1,15 +1,17 @@
-import { $NATION } from 'law.nation3.eth/$nation@0.1'
+import { NATION } from 'law.nation3.eth/$nation@0.1'
 
 ---
 
-Domain Name: test.com
-Seller: '0x312'
-Purchaser: '0x121'
+Domain Name: google.com
+Seller: '0xbac3ab60a1643e5f5de8eb62cb4bb232711d9dcd'
+Purchaser: luisc.eth
 Registrar: GoDaddy
-Purchase Price: 12 [[$NATION]]
-Deadline: 2010-02-11
+Purchase Price: 12 [[NATION]]
+Deadline: 2022-02-11
 
 ---
+
+# Domain Name Sale and Ownership Transfer Agreement
 
 This [[Domain Name]] Sale and Ownership Transfer Agreement ("Agreement”) is entered into between [[Seller]] and [[Purchaser]]. This agreement sets forth all terms and conditions under which [[Seller]] agrees to sell and transfer to [[Purchaser]] all ownership rights in and to the domain name [[Domain Name]] including any and all trademark rights and attendant goodwill associated therewith.
 

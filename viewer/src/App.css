@@ -1,38 +1,37 @@
-.App {
-  text-align: center;
+@import "https://unpkg.com/style.css/style.css";
+@import "https://unpkg.com/css-tooltip";
+
+
+body {
+  padding: 1rem;
+  overflow-x: hidden;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.split-screen {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  flex-direction: row;
+  gap: 1rem;
 }
 
-.App-link {
-  color: #61dafb;
+.input, .output {
+  width: 50%;
+  border-radius: 4px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+table {
+  overflow: visible;
+}
+
+textarea {
+  padding: 1rem;
+}
+
+.LM-ref span {
+  font-size: 75%;
+  color: black;
+}
+
+[data-tooltip]:before {
+  font-size: 1rem;
+  line-height: 1.25rem;
 }
