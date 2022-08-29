@@ -204,7 +204,7 @@ async function parse(file: string): Promise<LinkedMarkdownFile> {
   })
   const declarations = Object.assign(localDeclarations, importedDeclarations)
   const parsedFile: LinkedMarkdownFile = {
-    imports: parseStaticImports(splitFile[0]),
+    imports: parseImports(splitFile[0]),
     declarations,
     contents: splitFile[2],
   }
@@ -221,8 +221,6 @@ function getInput(): Promise<string> {
     stdin.on('error', reject)
   })
 }
-
-// getInput().then(parse).catch(console.error)
 
 export class LinkedMarkdown {
   input: string

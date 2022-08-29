@@ -1,6 +1,6 @@
 import './App.css'
 import { useState, useEffect } from 'react'
-import { LinkedMarkdown } from 'linked-markdown-parser'
+import { LinkedMarkdown } from '@linkedmd/parser'
 
 function App() {
   const [input, setInput] = useState('')
