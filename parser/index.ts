@@ -1,5 +1,6 @@
 // @ts-ignore
 import parseImports from 'parse-es6-imports'
+// @ts-ignore
 import yaml from 'js-yaml'
 import { marked } from 'marked'
 
@@ -112,7 +113,7 @@ function enrichDeclarations(
   input: string,
   packageName?: string
 ) {
-  const matches = [...input.matchAll(REFERENCE_REGEX)]
+  const matches = Array.from(input.matchAll(REFERENCE_REGEX))
   let newContents = input
   for (const decl of matches) {
     const name = decl[1]
@@ -136,7 +137,7 @@ function formatDeclarations(
   input: string,
   packageName?: string
 ): string {
-  const matches = [...input.matchAll(REFERENCE_REGEX)]
+  const matches = Array.from(input.matchAll(REFERENCE_REGEX))
   let newContents = input
   for (const decl of matches) {
     const name = decl[1]
