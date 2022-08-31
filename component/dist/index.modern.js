@@ -1,42 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { LinkedMarkdown } from '@linkedmd/parser';
 
-var fetchAndParse = function fetchAndParse(fileUrl) {
-  try {
-    return Promise.resolve(fetch(fileUrl)).then(function (data) {
-      return Promise.resolve(data.text()).then(function (file) {
-        var parser = new LinkedMarkdown(file);
-        return Promise.resolve(parser.parse()).then(function () {
-          return {
-            file: file,
-            parser: parser
-          };
-        });
-      });
-    });
-  } catch (e) {
-    return Promise.reject(e);
-  }
+const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs';
+
+const fetchAndParse = async fileURI => {
+  const ipfsURI = fileURI.startsWith('ipfs://') ? `${IPFS_GATEWAY}/${fileURI.split('ipfs://')[1]}` : false;
+  const data = await fetch(ipfsURI ? ipfsURI : fileURI);
+  const file = await data.text();
+  const parser = new LinkedMarkdown(file);
+  await parser.parse();
+  return {
+    file,
+    parser
+  };
 };
 
-var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
-  var fileUrl = _ref.fileUrl;
-
-  var _useState = useState([]),
-      fileStack = _useState[0],
-      setFileStack = _useState[1];
-
-  var _useState2 = useState(''),
-      output = _useState2[0],
-      setOutput = _useState2[1];
-
-  useEffect(function () {
-    fetchAndParse(fileUrl).then(function (_ref2) {
-      var parser = _ref2.parser;
-      setFileStack(fileStack.concat([fileUrl]));
-      setOutput(parser.toHTML() || '');
+const getUrlParams = search => {
+  let hashes = search.slice(search.indexOf('#') + 1).split('&');
+  return hashes.reduce((params, hash) => {
+    let [key, val] = hash.split('=');
+    return Object.assign(params, {
+      [key]: decodeURIComponent(val)
     });
+  }, {});
+};
+
+const LinkedMarkdownViewer = ({
+  fileURI,
+  onFileURIChange
+}) => {
+  const [fileStack, setFileStack] = useState([]);
+  const [output, setOutput] = useState('');
+
+  const fetchAndSet = newFileURI => {
+    fetchAndParse(newFileURI).then(({
+      parser
+    }) => {
+      setFileStack(fileStack.concat([newFileURI]));
+      setOutput(parser.toHTML() || '');
+      console.log(newFileURI);
+      onFileURIChange && onFileURIChange(newFileURI);
+    });
+  };
+
+  useEffect(() => {
+    fetchAndSet(fileURI);
   }, []);
+  window.addEventListener('hashchange', () => {
+    const params = getUrlParams(window.location.hash);
+    const newFileURI = params['LinkedMD-URI'];
+    newFileURI && fetchAndSet(newFileURI);
+  });
   return React.createElement("div", {
     className: "LM-output",
     dangerouslySetInnerHTML: {
@@ -44,40 +58,41 @@ var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
     }
   });
 };
-var LinkedMarkdownEditor = function LinkedMarkdownEditor(_ref3) {
-  var fileUrl = _ref3.fileUrl;
+const LinkedMarkdownEditor = ({
+  fileURI
+}) => {
+  const [input, setInput] = useState('');
+  const [output, setOutput] = useState('');
 
-  var _useState3 = useState(''),
-      input = _useState3[0],
-      setInput = _useState3[1];
-
-  var _useState4 = useState(''),
-      output = _useState4[0],
-      setOutput = _useState4[1];
-
-  useEffect(function () {
-    fetchAndParse(fileUrl).then(function (_ref4) {
-      var file = _ref4.file,
-          parser = _ref4.parser;
+  const fetchAndSet = newFileURI => {
+    fetchAndParse(newFileURI).then(({
+      file,
+      parser
+    }) => {
       setInput(file || '');
       setOutput(parser.toHTML() || '');
       !!file && localStorage.setItem('saved-input', file);
     });
-  }, []);
-  useEffect(function () {
-    var parser = new LinkedMarkdown(input);
-    parser.parse().then(function () {
+  };
+
+  useEffect(() => {
+    fetchAndSet(fileURI);
+  }, [fileURI]);
+  useEffect(() => {
+    const parser = new LinkedMarkdown(input);
+    parser.parse().then(() => {
       setOutput(parser.toHTML());
     });
     input !== '' && localStorage.setItem('saved-input', input);
   }, [input]);
-  useEffect(function () {
-    var savedInput = localStorage.getItem('saved-input');
+  useEffect(() => {
+    fetchAndSet(fileURI);
+    const savedInput = localStorage.getItem('saved-input');
     !!savedInput && setInput(savedInput || '');
   }, []);
 
-  var handleInput = function handleInput(e) {
-    var target = e.target;
+  const handleInput = e => {
+    const target = e.target;
     setInput(target.value);
   };
 

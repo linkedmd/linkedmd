@@ -1,7 +1,9 @@
 import './styles.css';
+declare type FileURICallback = (newFileURI: string) => any;
 interface Props {
-    fileUrl: string;
+    fileURI: string;
+    onFileURIChange?: FileURICallback;
 }
-export declare const LinkedMarkdownViewer: ({ fileUrl }: Props) => JSX.Element;
-export declare const LinkedMarkdownEditor: ({ fileUrl }: Props) => JSX.Element;
+export declare const LinkedMarkdownViewer: ({ fileURI, onFileURIChange }: Props) => JSX.Element;
+export declare const LinkedMarkdownEditor: ({ fileURI }: Props) => JSX.Element;
 export {};

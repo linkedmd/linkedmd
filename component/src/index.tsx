@@ -2,47 +2,79 @@ import React, { useState, useEffect } from 'react'
 import { LinkedMarkdown } from '@linkedmd/parser'
 import './styles.css'
 
-interface Props {
-  fileUrl: string
-}
+const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs'
 
-const fetchAndParse = async (fileUrl: string) => {
-  const data = await fetch(fileUrl)
+const fetchAndParse = async (fileURI: string) => {
+  const ipfsURI = fileURI.startsWith('ipfs://')
+    ? `${IPFS_GATEWAY}/${fileURI.split('ipfs://')[1]}`
+    : false
+  const data = await fetch(ipfsURI ? ipfsURI : fileURI)
   const file = await data.text()
   const parser = new LinkedMarkdown(file)
   await parser.parse()
   return { file, parser }
 }
 
-export const LinkedMarkdownViewer = ({ fileUrl }: Props) => {
+const getUrlParams = (search: string) => {
+  let hashes = search.slice(search.indexOf('#') + 1).split('&')
+  return hashes.reduce((params, hash) => {
+    let [key, val] = hash.split('=')
+    return Object.assign(params, { [key]: decodeURIComponent(val) })
+  }, {})
+}
+
+type FileURICallback = (newFileURI: string) => any
+
+interface Props {
+  fileURI: string
+  onFileURIChange?: FileURICallback
+}
+
+export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
   const [fileStack, setFileStack] = useState<string[]>([])
   const [output, setOutput] = useState('')
 
-  useEffect(() => {
-    fetchAndParse(fileUrl).then(({ parser }: { parser: any }) => {
-      setFileStack(fileStack.concat([fileUrl]))
+  const fetchAndSet = (newFileURI: string) => {
+    fetchAndParse(newFileURI).then(({ parser }: { parser: any }) => {
+      setFileStack(fileStack.concat([newFileURI]))
       setOutput(parser.toHTML() || '')
+      console.log(newFileURI)
+      onFileURIChange && onFileURIChange(newFileURI)
     })
+  }
+
+  useEffect(() => {
+    fetchAndSet(fileURI)
   }, [])
+
+  window.addEventListener('hashchange', () => {
+    const params = getUrlParams(window.location.hash)
+    const newFileURI = params['LinkedMD-URI']
+    newFileURI && fetchAndSet(newFileURI)
+  })
 
   return (
     <div className="LM-output" dangerouslySetInnerHTML={{ __html: output }} />
   )
 }
 
-export const LinkedMarkdownEditor = ({ fileUrl }: Props) => {
+export const LinkedMarkdownEditor = ({ fileURI }: Props) => {
   const [input, setInput] = useState<string>('')
   const [output, setOutput] = useState('')
 
-  useEffect(() => {
-    fetchAndParse(fileUrl).then(
+  const fetchAndSet = (newFileURI: string) => {
+    fetchAndParse(newFileURI).then(
       ({ file, parser }: { file: string; parser: any }) => {
         setInput(file || '')
         setOutput(parser.toHTML() || '')
         !!file && localStorage.setItem('saved-input', file)
       }
     )
-  }, [])
+  }
+
+  useEffect(() => {
+    fetchAndSet(fileURI)
+  }, [fileURI])
 
   useEffect(() => {
     const parser = new LinkedMarkdown(input)
@@ -53,6 +85,7 @@ export const LinkedMarkdownEditor = ({ fileUrl }: Props) => {
   }, [input])
 
   useEffect(() => {
+    fetchAndSet(fileURI)
     const savedInput = localStorage.getItem('saved-input')
     !!savedInput && setInput(savedInput || '')
   }, [])
