@@ -17,16 +17,17 @@ const fetchAndParse = async (fileUrl: string) => {
 export const LinkedMarkdownViewer = ({ fileUrl }: Props) => {
   const [fileStack, setFileStack] = useState<string[]>([])
   const [output, setOutput] = useState('')
-  
+
   useEffect(() => {
-    fetchAndParse(fileUrl)
-      .then(({ parser }: { parser: any }) => {
-        setFileStack(fileStack.concat([fileUrl]))
-        setOutput(parser.toHTML() || '')
-      })
+    fetchAndParse(fileUrl).then(({ parser }: { parser: any }) => {
+      setFileStack(fileStack.concat([fileUrl]))
+      setOutput(parser.toHTML() || '')
+    })
   }, [])
 
-  return <div className="LM-output" dangerouslySetInnerHTML={{ __html: output }} />
+  return (
+    <div className="LM-output" dangerouslySetInnerHTML={{ __html: output }} />
+  )
 }
 
 export const LinkedMarkdownEditor = ({ fileUrl }: Props) => {
@@ -34,13 +35,13 @@ export const LinkedMarkdownEditor = ({ fileUrl }: Props) => {
   const [output, setOutput] = useState('')
 
   useEffect(() => {
-    fetchAndParse(fileUrl)
-      .then(({ file, parser }: { file: string, parser: any }) => {
+    fetchAndParse(fileUrl).then(
+      ({ file, parser }: { file: string; parser: any }) => {
         setInput(file || '')
         setOutput(parser.toHTML() || '')
         !!file && localStorage.setItem('saved-input', file)
-      })
-    
+      }
+    )
   }, [])
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export const LinkedMarkdownEditor = ({ fileUrl }: Props) => {
     const target = e.target as typeof e.target & {
       value: string
     }
-  
+
     setInput(target.value)
   }
 

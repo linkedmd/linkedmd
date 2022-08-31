@@ -1,4 +1,4 @@
-import { NATION } from '0x2229EA76Ef8A0b428A9D38bC328023123C663f49/NATION/bafkreic6xskgzoq3n5ox74zv7j2nuztgqzzcrh6sinj7qoph3m6l36ltba'
+import { NATION } from 'ipfs://bafkreic6xskgzoq3n5ox74zv7j2nuztgqzzcrh6sinj7qoph3m6l36ltba'
 
 ---
 

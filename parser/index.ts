@@ -13,6 +13,7 @@ const DOMAIN_REGEX =
   /^(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})\.[a-z]{2,}$/
 const URL_REGEX =
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
+const IPFS_GATEWAY = 'https://gateway.ipfs.io/ipfs'
 
 type LinkedMarkdownFile = {
   imports: Array<Import> | []
@@ -40,8 +41,10 @@ function error(message: string) {
 }
 
 async function fetchPackage(uri: string): Promise<string> {
+  const ipfsURI = uri.startsWith('ipfs://') ? `${IPFS_GATEWAY}/${uri}` : false
+
   try {
-    const req = await fetch(uri)
+    const req = await fetch(ipfsURI || uri)
     const file = await req.text()
     return file
   } catch (e) {
