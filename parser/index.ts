@@ -7,13 +7,13 @@ import { marked } from 'marked'
 const FILE_PART_DELIMITER = '---'
 // Safari doesn't support look behind (<=)
 // const REFERENCE_REGEX = /(?<=\[\[)([^\[\]]*)(?=\]\])/g
-const REFERENCE_REGEX = /(?:\[\[)([^\[\]]*)(?=\]\])/g
+const DECLARATION_REGEX = /(?:\[\[)([^\[\]]*)(?=\]\])/g
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
 const DOMAIN_REGEX =
   /^(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})\.[a-z]{2,}$/
 const URL_REGEX =
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
-const IPFS_GATEWAY = 'https://gateway.ipfs.io/ipfs'
+const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs'
 
 type LinkedMarkdownFile = {
   imports: Array<Import> | []
@@ -32,7 +32,7 @@ type Import = {
 
 type Declaration = {
   value: string
-  packageName?: any
+  pkgVersionURI?: string
   remoteScope?: boolean
 }
 
@@ -40,15 +40,17 @@ function error(message: string) {
   console.error(`LinkedMarkdown compiler: ${message}`)
 }
 
-async function fetchPackage(uri: string): Promise<string> {
-  const ipfsURI = uri.startsWith('ipfs://') ? `${IPFS_GATEWAY}/${uri}` : false
+async function fetchPackageVersion(uri: string): Promise<string> {
+  const ipfsURI = uri.startsWith('ipfs://')
+    ? `${IPFS_GATEWAY}/${uri.split('ipfs://')[1]}`
+    : false
 
   try {
     const req = await fetch(ipfsURI || uri)
     const file = await req.text()
     return file
   } catch (e) {
-    error(`Fetching package was impossible (URI ${uri})`)
+    error(`Fetching package version was impossible (URI ${uri})`)
     return ''
   }
 }
@@ -58,7 +60,7 @@ async function resolveImports(code: string): Promise<any> {
   const importedDeclarations = {}
   await Promise.all(
     imports.map(async (unresolvedImport: Import) => {
-      const file = await fetchPackage(unresolvedImport.fromModule)
+      const file = await fetchPackageVersion(unresolvedImport.fromModule)
       const importedFile = new LinkedMarkdown(file)
       await importedFile.parse()
       unresolvedImport.namedImports?.map((namedImport: any) => {
@@ -71,14 +73,14 @@ async function resolveImports(code: string): Promise<any> {
         // @ts-ignore
         importedDeclarations[namedImport.value] = {
           value: importedFile.data.declarations[namedImport.name].value,
-          packageName: unresolvedImport.fromModule,
+          pkgVersionURI: unresolvedImport.fromModule,
         }
       })
       Object.keys(importedFile.data.declarations).map((name) => {
         // @ts-ignore
-        importedDeclarations[`${unresolvedImport.fromModule}/${name}`] = {
+        importedDeclarations[`${unresolvedImport.fromModule}#${name}`] = {
           value: importedFile.data.declarations[name].value,
-          packageName: unresolvedImport.fromModule,
+          pkgVersionURI: unresolvedImport.fromModule,
           remoteScope: true,
         }
       })
@@ -111,19 +113,23 @@ function formatValue(value: string | number | Date): string | number | Date {
   return value
 }
 
+function formatDeclarationPath(name: string, pkgVersionURI?: string) {
+  return pkgVersionURI ? `${pkgVersionURI}#${name}` : name
+}
+
 function enrichDeclarations(
   declarations: Object | any,
   input: string,
-  packageName?: string
+  pkgVersionURI?: string
 ) {
-  const matches = Array.from(input.matchAll(REFERENCE_REGEX))
+  const matches = Array.from(input.matchAll(DECLARATION_REGEX))
   let newContents = input
   for (const decl of matches) {
     const name = decl[1]
-    const declarationPath = packageName ? `${packageName}/${name}` : name
+    const declarationPath = formatDeclarationPath(name, pkgVersionURI)
 
     if (!declarations[declarationPath]) {
-      error(`Reference ${declarationPath} not found`)
+      error(`Declaration ${declarationPath} not found`)
       return newContents
     }
 
@@ -138,32 +144,39 @@ function enrichDeclarations(
 function formatDeclarations(
   declarations: Object | any,
   input: string,
-  packageName?: string
+  pkgVersionURI?: string,
+  formatForTable?: boolean
 ): string {
-  const matches = Array.from(input.matchAll(REFERENCE_REGEX))
+  const matches = Array.from(input.matchAll(DECLARATION_REGEX))
   let newContents = input
   for (const decl of matches) {
     const name = decl[1]
-    const declarationPath = packageName ? `${packageName}/${name}` : name
+    let declarationPath = formatDeclarationPath(name, pkgVersionURI)
     const declaration = declarations[declarationPath]
-    const refError = !declaration && `style="color: red"`
-    refError && error(`Reference ${name} not found`)
+    if (declaration?.pkgVersionURI) {
+      declarationPath = formatDeclarationPath(name, declaration.pkgVersionURI)
+    }
+    const decError = !declaration && `style="color: red"`
+    decError && error(`Declaration ${name} not found`)
 
-    const refTooltip = !refError
+    const decTooltip = !decError
       ? `data-tooltip="${enrichDeclarations(
           declarations,
           declaration.value,
-          packageName || declaration.packageName
+          pkgVersionURI || declaration?.pkgVersionURI
         )}"`
-      : `data-tooltip="Reference ${name} not found"`
+      : `data-tooltip="Declaration ${name} not found"`
 
-    const escapedPath = packageName
-      ? `${escape(packageName)}/${escape(name)}`
-      : name
+    const declarationHref =
+      formatForTable &&
+      (declarationPath.match(URL_REGEX) ||
+        declarationPath.startsWith('ipfs://'))
+        ? `#LinkedMD-URI=${declarationPath}`
+        : `#Declaration/${declarationPath}`
 
     newContents = newContents.replaceAll(
       `[[${name}]]`,
-      `<a href="#Ref/${escapedPath}" class="LM-ref" ${refTooltip} ${refError}>${name}</a>`
+      `<a href="${declarationHref}" class="LM-dec" ${decTooltip} ${decError}>${name}</a>`
     )
   }
   return newContents
@@ -173,21 +186,25 @@ function addDeclarationsTable(
   declarations: Object | any,
   contents: string
 ): string {
-  let referenceMap: any = ''
+  let declarationMap: any = ''
   Object.keys(declarations).map((key) => {
     if (declarations[key].remoteScope) return
 
-    referenceMap += `<tr id="Ref/${escape(
-      key
+    console.log(declarations[key])
+
+    declarationMap += `<tr id="Declaration/${formatDeclarationPath(
+      key,
+      declarations[key].pkgVersionURI
     )}"><td>${key}</td><td>${formatDeclarations(
       declarations,
       formatValue(declarations[key].value).toString(),
-      declarations[key].packageName
+      declarations[key].pkgVersionURI,
+      true
     )}</td></tr>`
   })
-  referenceMap = `<table id="LinkedMarkdown-References">${referenceMap}</table>`
+  declarationMap = `<table id="LinkedMarkdown-Declarations">${declarationMap}</table>`
   let newContents = formatDeclarations(declarations, contents)
-  return `${referenceMap}${newContents}`
+  return `${declarationMap}${newContents}`
 }
 
 type Declarations = {
@@ -240,6 +257,7 @@ export class LinkedMarkdown {
   }
 
   toHTML() {
+    console.log(this.data.declarations)
     return marked.parse(
       addDeclarationsTable(this.data.declarations, this.data.contents)
     )
