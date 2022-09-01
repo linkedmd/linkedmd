@@ -15,14 +15,6 @@ const fetchAndParse = async (fileURI: string) => {
   return { file, parser }
 }
 
-const getUrlParams = (search: string) => {
-  let hashes = search.slice(search.indexOf('#') + 1).split('&')
-  return hashes.reduce((params, hash) => {
-    let [key, val] = hash.split('=')
-    return Object.assign(params, { [key]: decodeURIComponent(val) })
-  }, {})
-}
-
 type FileURICallback = (newFileURI: string) => any
 
 interface Props {
@@ -34,27 +26,45 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
   const [fileStack, setFileStack] = useState<string[]>([])
   const [output, setOutput] = useState('')
 
-  const fetchAndSet = (newFileURI: string) => {
+  const fetchAndSet = (newFileURI: string, addToStack: boolean) => {
     fetchAndParse(newFileURI).then(({ parser }: { parser: any }) => {
-      setFileStack(fileStack.concat([newFileURI]))
+      addToStack && setFileStack(fileStack.concat([newFileURI]))
       setOutput(parser.toHTML() || '')
-      console.log(newFileURI)
       onFileURIChange && onFileURIChange(newFileURI)
     })
   }
 
   useEffect(() => {
-    fetchAndSet(fileURI)
+    fetchAndSet(fileURI, true)
   }, [])
 
-  window.addEventListener('hashchange', () => {
-    const params = getUrlParams(window.location.hash)
-    const newFileURI = params['LinkedMD-URI']
-    newFileURI && fetchAndSet(newFileURI)
-  })
+  window.addEventListener(
+    'message',
+    (event) => {
+      if (event.origin !== window.location.origin) return
+
+      try {
+        const newFileURI = JSON.parse(unescape(event.data)).lmURI
+        fetchAndSet(newFileURI, true)
+      } catch (e) {}
+    },
+    false
+  )
+
+  function goBack() {
+    fetchAndSet(fileStack[fileStack.length - 2], false)
+    setFileStack(fileStack.slice(0, -1))
+  }
 
   return (
-    <div className="LM-output" dangerouslySetInnerHTML={{ __html: output }} />
+    <div>
+      {fileStack.length > 1 && (
+        <a onClick={goBack} style={{ cursor: 'pointer' }}>
+          ← Back
+        </a>
+      )}
+      <div className="LM-output" dangerouslySetInnerHTML={{ __html: output }} />
+    </div>
   )
 }
 

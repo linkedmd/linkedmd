@@ -103,6 +103,13 @@ async function resolveImports(code: string): Promise<any> {
 const Link = ({ href, text }: { href: string; text: string }) =>
   `<a href="${href}" rel="noreferrer" target="_blank">${text}</a>`
 
+const LMLinkAction = ({ uri }: { uri: string }) =>
+  `onClick="window.postMessage('${escape(
+    JSON.stringify({
+      lmURI: uri,
+    })
+  )}')"`
+
 function formatValue(value: string | number | Date): string | number | Date {
   if (typeof value === 'string') {
     if (
@@ -178,16 +185,18 @@ function formatDeclarations(
         )}"`
       : `data-tooltip="Declaration ${name} not found"`
 
-    const declarationHref =
+    const action =
       formatForTable &&
       (declarationPath.match(URL_REGEX) ||
         declarationPath.startsWith('ipfs://'))
-        ? `#LinkedMD-URI=${declarationPath}`
-        : `#Declaration/${declarationPath}`
+        ? LMLinkAction({
+            uri: declarationPath,
+          })
+        : `href="#Declaration/${declarationPath}"`
 
     newContents = newContents.replaceAll(
       `[[${name}]]`,
-      `<a href="${declarationHref}" class="LM-dec" ${decTooltip} ${decError}>${name}</a>`
+      `<a ${action} style="cursor: pointer" class="LM-dec" ${decTooltip} ${decError}>${name}</a>`
     )
   }
   return newContents
@@ -208,7 +217,9 @@ function createDeclarationsTable(
     )}"><td>${
       !linkDeclarations
         ? key
-        : `<a href="#LinkedMD-URI=${declarations[key].pkgVersionURI}#${key}">${key}</a>`
+        : `<a style="cursor: pointer" ${LMLinkAction({
+            uri: `${declarations[key].pkgVersionURI}#${key}`,
+          })}>${key}</a>`
     }</td><td>${formatDeclarations(
       declarations,
       formatValue(declarations[key].value).toString(),

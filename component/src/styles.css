@@ -12,8 +12,13 @@
   border-radius: 4px;
 }
 
-table {
-  overflow: visible;
+:global(.LM-output) {
+  display: flex;
+  flex-direction: column;
+}
+
+:global(.LM-table) {
+  display: table;
 }
 
 textarea {

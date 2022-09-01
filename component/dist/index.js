@@ -25,19 +25,6 @@ var fetchAndParse = function fetchAndParse(fileURI) {
   }
 };
 
-var getUrlParams = function getUrlParams(search) {
-  var hashes = search.slice(search.indexOf('#') + 1).split('&');
-  return hashes.reduce(function (params, hash) {
-    var _Object$assign;
-
-    var _hash$split = hash.split('='),
-        key = _hash$split[0],
-        val = _hash$split[1];
-
-    return Object.assign(params, (_Object$assign = {}, _Object$assign[key] = decodeURIComponent(val), _Object$assign));
-  }, {});
-};
-
 var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
   var fileURI = _ref.fileURI,
       onFileURIChange = _ref.onFileURIChange;
@@ -50,30 +37,43 @@ var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
       output = _useState2[0],
       setOutput = _useState2[1];
 
-  var fetchAndSet = function fetchAndSet(newFileURI) {
+  var fetchAndSet = function fetchAndSet(newFileURI, addToStack) {
     fetchAndParse(newFileURI).then(function (_ref2) {
       var parser = _ref2.parser;
-      setFileStack(fileStack.concat([newFileURI]));
+      addToStack && setFileStack(fileStack.concat([newFileURI]));
       setOutput(parser.toHTML() || '');
-      console.log(newFileURI);
       onFileURIChange && onFileURIChange(newFileURI);
     });
   };
 
   React.useEffect(function () {
-    fetchAndSet(fileURI);
+    fetchAndSet(fileURI, true);
   }, []);
-  window.addEventListener('hashchange', function () {
-    var params = getUrlParams(window.location.hash);
-    var newFileURI = params['LinkedMD-URI'];
-    newFileURI && fetchAndSet(newFileURI);
-  });
-  return React__default.createElement("div", {
+  window.addEventListener('message', function (event) {
+    if (event.origin !== window.location.origin) return;
+
+    try {
+      var newFileURI = JSON.parse(unescape(event.data)).lmURI;
+      fetchAndSet(newFileURI, true);
+    } catch (e) {}
+  }, false);
+
+  function goBack() {
+    fetchAndSet(fileStack[fileStack.length - 2], false);
+    setFileStack(fileStack.slice(0, -1));
+  }
+
+  return React__default.createElement("div", null, fileStack.length > 1 && React__default.createElement("a", {
+    onClick: goBack,
+    style: {
+      cursor: 'pointer'
+    }
+  }, "\u2190 Back"), React__default.createElement("div", {
     className: "LM-output",
     dangerouslySetInnerHTML: {
       __html: output
     }
-  });
+  }));
 };
 var LinkedMarkdownEditor = function LinkedMarkdownEditor(_ref3) {
   var fileURI = _ref3.fileURI;

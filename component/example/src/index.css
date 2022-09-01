@@ -1,4 +1,10 @@
+@import url("https://fonts.kemitchell.com/equity-a.css");
+
 body {
+  font-family: 'Equity A', Georgia, serif !important;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  text-rendering: optimizeLegibility;
   padding: 1rem;
   overflow-x: hidden;
 }

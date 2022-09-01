@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { LinkedMarkdownViewer, LinkedMarkdownEditor } from '@linkedmd/component'
+import './index.css'
 import '@linkedmd/component/dist/index.css'
 
 const App = () => {

@@ -15,16 +15,6 @@ const fetchAndParse = async fileURI => {
   };
 };
 
-const getUrlParams = search => {
-  let hashes = search.slice(search.indexOf('#') + 1).split('&');
-  return hashes.reduce((params, hash) => {
-    let [key, val] = hash.split('=');
-    return Object.assign(params, {
-      [key]: decodeURIComponent(val)
-    });
-  }, {});
-};
-
 const LinkedMarkdownViewer = ({
   fileURI,
   onFileURIChange
@@ -32,31 +22,44 @@ const LinkedMarkdownViewer = ({
   const [fileStack, setFileStack] = useState([]);
   const [output, setOutput] = useState('');
 
-  const fetchAndSet = newFileURI => {
+  const fetchAndSet = (newFileURI, addToStack) => {
     fetchAndParse(newFileURI).then(({
       parser
     }) => {
-      setFileStack(fileStack.concat([newFileURI]));
+      addToStack && setFileStack(fileStack.concat([newFileURI]));
       setOutput(parser.toHTML() || '');
-      console.log(newFileURI);
       onFileURIChange && onFileURIChange(newFileURI);
     });
   };
 
   useEffect(() => {
-    fetchAndSet(fileURI);
+    fetchAndSet(fileURI, true);
   }, []);
-  window.addEventListener('hashchange', () => {
-    const params = getUrlParams(window.location.hash);
-    const newFileURI = params['LinkedMD-URI'];
-    newFileURI && fetchAndSet(newFileURI);
-  });
-  return React.createElement("div", {
+  window.addEventListener('message', event => {
+    if (event.origin !== window.location.origin) return;
+
+    try {
+      const newFileURI = JSON.parse(unescape(event.data)).lmURI;
+      fetchAndSet(newFileURI, true);
+    } catch (e) {}
+  }, false);
+
+  function goBack() {
+    fetchAndSet(fileStack[fileStack.length - 2], false);
+    setFileStack(fileStack.slice(0, -1));
+  }
+
+  return React.createElement("div", null, fileStack.length > 1 && React.createElement("a", {
+    onClick: goBack,
+    style: {
+      cursor: 'pointer'
+    }
+  }, "\u2190 Back"), React.createElement("div", {
     className: "LM-output",
     dangerouslySetInnerHTML: {
       __html: output
     }
-  });
+  }));
 };
 const LinkedMarkdownEditor = ({
   fileURI
