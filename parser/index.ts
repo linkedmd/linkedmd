@@ -80,7 +80,6 @@ async function resolveImports(code: string): Promise<any> {
           )
           return
         }
-        console.log(namedImport.value)
         // @ts-ignore
         importedDeclarations[namedImport.value] = {
           value: importedFile.data.declarations.all[namedImport.name].value,
@@ -135,6 +134,22 @@ function formatDeclarationPath(name: string, pkgVersionURI?: string) {
   return pkgVersionURI ? `${pkgVersionURI}#${name}` : name
 }
 
+function discoverDeclaration(
+  declarations: Object | any,
+  name: string,
+  pkgVersionURI?: string
+) {
+  let declarationPath = formatDeclarationPath(name, pkgVersionURI)
+  let declaration = declarations[declarationPath]
+
+  if (declaration?.pkgVersionURI) {
+    declarationPath = formatDeclarationPath(name, declaration.pkgVersionURI)
+    declaration = declarations[declarationPath]
+  }
+
+  return { declaration, declarationPath }
+}
+
 function enrichDeclarations(
   declarations: Object | any,
   input: string,
@@ -144,16 +159,25 @@ function enrichDeclarations(
   let newContents = input
   for (const decl of matches) {
     const name = decl[1]
-    const declarationPath = formatDeclarationPath(name, pkgVersionURI)
+
+    let { declaration, declarationPath } = discoverDeclaration(
+      declarations,
+      name,
+      pkgVersionURI
+    )
 
     if (!declarations[declarationPath]) {
       error(`Declaration ${declarationPath} not found`)
-      return newContents
+      continue
     }
 
     newContents = newContents.replaceAll(
       `[[${name}]]`,
-      `${name} (${declarations[declarationPath].value})`
+      `${name} (${enrichDeclarations(
+        declarations,
+        declarations[declarationPath].value,
+        pkgVersionURI || declaration?.pkgVersionURI
+      )})`
     )
   }
   return newContents
@@ -169,11 +193,12 @@ function formatDeclarations(
   let newContents = input
   for (const decl of matches) {
     const name = decl[1]
-    let declarationPath = formatDeclarationPath(name, pkgVersionURI)
-    const declaration = declarations[declarationPath]
-    if (declaration?.pkgVersionURI) {
-      declarationPath = formatDeclarationPath(name, declaration.pkgVersionURI)
-    }
+    let { declaration, declarationPath } = discoverDeclaration(
+      declarations,
+      name,
+      pkgVersionURI
+    )
+
     const decError = !declaration && `style="color: red"`
     decError && error(`Declaration ${name} not found`)
 
@@ -231,10 +256,7 @@ function createDeclarationsTable(
   ${declarationTable}</table>`
 }
 
-function addDeclarationsTables(
-  declarations: Object | any,
-  contents: string
-): string {
+function wrap(declarations: Object | any, contents: string): string {
   return `${
     Object.keys(declarations.imported).length > 0
       ? createDeclarationsTable('Imported', declarations.imported, true)
@@ -289,8 +311,6 @@ export class LinkedMarkdown {
   }
 
   toHTML() {
-    return marked.parse(
-      addDeclarationsTables(this.data.declarations, this.data.contents)
-    )
+    return marked.parse(wrap(this.data.declarations, this.data.contents))
   }
 }
