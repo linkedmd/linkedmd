@@ -25,34 +25,37 @@ interface Props {
 export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
   const [fileStack, setFileStack] = useState<string[]>([])
   const [output, setOutput] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const fetchAndSet = (newFileURI: string, addToStack: boolean) => {
-    fetchAndParse(newFileURI).then(({ parser }: { parser: any }) => {
-      addToStack && setFileStack(fileStack.concat([newFileURI]))
-      setOutput(parser.toHTML() || '')
-      onFileURIChange && onFileURIChange(newFileURI)
-    })
+  const fetchAndSet = async (newFileURI: string, addToStack: boolean) => {
+    setLoading(true)
+    const { parser } = await fetchAndParse(newFileURI)
+    setOutput(parser.toHTML() || '')
+    addToStack && setFileStack((fileStack) => [...fileStack, newFileURI])
+    onFileURIChange && onFileURIChange(newFileURI)
+    setLoading(false)
   }
 
   useEffect(() => {
     fetchAndSet(fileURI, true)
+
+    window.addEventListener(
+      'message',
+      (event) => {
+        if (event.origin !== window.location.origin) return
+
+        try {
+          const newFileURI = JSON.parse(unescape(event.data)).lmURI
+          console.log(newFileURI)
+          fetchAndSet(newFileURI, true)
+        } catch (e) {}
+      },
+      false
+    )
   }, [])
 
-  window.addEventListener(
-    'message',
-    (event) => {
-      if (event.origin !== window.location.origin) return
-
-      try {
-        const newFileURI = JSON.parse(unescape(event.data)).lmURI
-        fetchAndSet(newFileURI, true)
-      } catch (e) {}
-    },
-    false
-  )
-
-  function goBack() {
-    fetchAndSet(fileStack[fileStack.length - 2], false)
+  async function goBack() {
+    await fetchAndSet(fileStack[fileStack.length - 2], false)
     setFileStack(fileStack.slice(0, -1))
   }
 
@@ -63,6 +66,9 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
           ← Back
         </a>
       )}
+      {loading && fileStack.length > 1 && ' | '}
+      {loading && <span>Loading</span>}
+
       <div className="LM-output" dangerouslySetInnerHTML={{ __html: output }} />
     </div>
   )

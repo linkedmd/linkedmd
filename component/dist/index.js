@@ -26,6 +26,16 @@ var fetchAndParse = function fetchAndParse(fileURI) {
 };
 
 var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
+  var goBack = function goBack() {
+    try {
+      return Promise.resolve(fetchAndSet(fileStack[fileStack.length - 2], false)).then(function () {
+        setFileStack(fileStack.slice(0, -1));
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  };
+
   var fileURI = _ref.fileURI,
       onFileURIChange = _ref.onFileURIChange;
 
@@ -37,38 +47,45 @@ var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
       output = _useState2[0],
       setOutput = _useState2[1];
 
+  var _useState3 = React.useState(false),
+      loading = _useState3[0],
+      setLoading = _useState3[1];
+
   var fetchAndSet = function fetchAndSet(newFileURI, addToStack) {
-    fetchAndParse(newFileURI).then(function (_ref2) {
-      var parser = _ref2.parser;
-      addToStack && setFileStack(fileStack.concat([newFileURI]));
-      setOutput(parser.toHTML() || '');
-      onFileURIChange && onFileURIChange(newFileURI);
-    });
+    try {
+      setLoading(true);
+      return Promise.resolve(fetchAndParse(newFileURI)).then(function (_ref2) {
+        var parser = _ref2.parser;
+        setOutput(parser.toHTML() || '');
+        addToStack && setFileStack(function (fileStack) {
+          return [].concat(fileStack, [newFileURI]);
+        });
+        onFileURIChange && onFileURIChange(newFileURI);
+        setLoading(false);
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
 
   React.useEffect(function () {
     fetchAndSet(fileURI, true);
+    window.addEventListener('message', function (event) {
+      if (event.origin !== window.location.origin) return;
+
+      try {
+        var newFileURI = JSON.parse(unescape(event.data)).lmURI;
+        console.log(newFileURI);
+        fetchAndSet(newFileURI, true);
+      } catch (e) {}
+    }, false);
   }, []);
-  window.addEventListener('message', function (event) {
-    if (event.origin !== window.location.origin) return;
-
-    try {
-      var newFileURI = JSON.parse(unescape(event.data)).lmURI;
-      fetchAndSet(newFileURI, true);
-    } catch (e) {}
-  }, false);
-
-  function goBack() {
-    fetchAndSet(fileStack[fileStack.length - 2], false);
-    setFileStack(fileStack.slice(0, -1));
-  }
-
   return React__default.createElement("div", null, fileStack.length > 1 && React__default.createElement("a", {
     onClick: goBack,
     style: {
       cursor: 'pointer'
     }
-  }, "\u2190 Back"), React__default.createElement("div", {
+  }, "\u2190 Back"), loading && fileStack.length > 1 && ' | ', loading && React__default.createElement("span", null, "Loading"), React__default.createElement("div", {
     className: "LM-output",
     dangerouslySetInnerHTML: {
       __html: output
@@ -78,13 +95,13 @@ var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
 var LinkedMarkdownEditor = function LinkedMarkdownEditor(_ref3) {
   var fileURI = _ref3.fileURI;
 
-  var _useState3 = React.useState(''),
-      input = _useState3[0],
-      setInput = _useState3[1];
-
   var _useState4 = React.useState(''),
-      output = _useState4[0],
-      setOutput = _useState4[1];
+      input = _useState4[0],
+      setInput = _useState4[1];
+
+  var _useState5 = React.useState(''),
+      output = _useState5[0],
+      setOutput = _useState5[1];
 
   var fetchAndSet = function fetchAndSet(newFileURI) {
     fetchAndParse(newFileURI).then(function (_ref4) {

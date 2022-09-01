@@ -4,12 +4,10 @@ import './index.css'
 import '@linkedmd/component/dist/index.css'
 
 const App = () => {
-  const [edit, setEdit] = useState(false)
-  const [fileURI, setFileURI] = useState(
+  const startFileURI =
     'https://raw.githubusercontent.com/nation3/linked-md/main/examples/DomainEscrow.linked.md'
-  )
-
-  console.log(fileURI)
+  const [edit, setEdit] = useState(false)
+  const [fileURI, setFileURI] = useState(startFileURI)
 
   return (
     <>
@@ -34,7 +32,7 @@ const App = () => {
       </h3>
       {edit ? (
         <div style={{ maxWidth: '1280px', margin: 'auto' }}>
-          <LinkedMarkdownEditor fileURI={fileURI} />
+          <LinkedMarkdownEditor fileURI={startFileURI} />
         </div>
       ) : (
         <div style={{ maxWidth: '768px', margin: 'auto' }}>

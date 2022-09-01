@@ -1,62 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { LinkedMarkdown } from '@linkedmd/parser';
 
-var IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs';
+const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs';
 
-var fetchAndParse = function fetchAndParse(fileURI) {
-  try {
-    var ipfsURI = fileURI.startsWith('ipfs://') ? IPFS_GATEWAY + "/" + fileURI.split('ipfs://')[1] : false;
-    return Promise.resolve(fetch(ipfsURI ? ipfsURI : fileURI)).then(function (data) {
-      return Promise.resolve(data.text()).then(function (file) {
-        var parser = new LinkedMarkdown(file);
-        return Promise.resolve(parser.parse()).then(function () {
-          return {
-            file: file,
-            parser: parser
-          };
-        });
-      });
-    });
-  } catch (e) {
-    return Promise.reject(e);
-  }
+const fetchAndParse = async fileURI => {
+  const ipfsURI = fileURI.startsWith('ipfs://') ? `${IPFS_GATEWAY}/${fileURI.split('ipfs://')[1]}` : false;
+  const data = await fetch(ipfsURI ? ipfsURI : fileURI);
+  const file = await data.text();
+  const parser = new LinkedMarkdown(file);
+  await parser.parse();
+  return {
+    file,
+    parser
+  };
 };
 
-var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
-  var fileURI = _ref.fileURI,
-      onFileURIChange = _ref.onFileURIChange;
+const LinkedMarkdownViewer = ({
+  fileURI,
+  onFileURIChange
+}) => {
+  const [fileStack, setFileStack] = useState([]);
+  const [output, setOutput] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  var _useState = useState([]),
-      fileStack = _useState[0],
-      setFileStack = _useState[1];
-
-  var _useState2 = useState(''),
-      output = _useState2[0],
-      setOutput = _useState2[1];
-
-  var fetchAndSet = function fetchAndSet(newFileURI, addToStack) {
-    fetchAndParse(newFileURI).then(function (_ref2) {
-      var parser = _ref2.parser;
-      addToStack && setFileStack(fileStack.concat([newFileURI]));
-      setOutput(parser.toHTML() || '');
-      onFileURIChange && onFileURIChange(newFileURI);
-    });
+  const fetchAndSet = async (newFileURI, addToStack) => {
+    setLoading(true);
+    const {
+      parser
+    } = await fetchAndParse(newFileURI);
+    setOutput(parser.toHTML() || '');
+    addToStack && setFileStack(fileStack => [...fileStack, newFileURI]);
+    onFileURIChange && onFileURIChange(newFileURI);
+    setLoading(false);
   };
 
-  useEffect(function () {
+  useEffect(() => {
     fetchAndSet(fileURI, true);
+    window.addEventListener('message', event => {
+      if (event.origin !== window.location.origin) return;
+
+      try {
+        const newFileURI = JSON.parse(unescape(event.data)).lmURI;
+        console.log(newFileURI);
+        fetchAndSet(newFileURI, true);
+      } catch (e) {}
+    }, false);
   }, []);
-  window.addEventListener('message', function (event) {
-    if (event.origin !== window.location.origin) return;
 
-    try {
-      var newFileURI = JSON.parse(unescape(event.data)).lmURI;
-      fetchAndSet(newFileURI, true);
-    } catch (e) {}
-  }, false);
-
-  function goBack() {
-    fetchAndSet(fileStack[fileStack.length - 2], false);
+  async function goBack() {
+    await fetchAndSet(fileStack[fileStack.length - 2], false);
     setFileStack(fileStack.slice(0, -1));
   }
 
@@ -65,52 +57,48 @@ var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
     style: {
       cursor: 'pointer'
     }
-  }, "\u2190 Back"), React.createElement("div", {
+  }, "\u2190 Back"), loading && fileStack.length > 1 && ' | ', loading && React.createElement("span", null, "Loading"), React.createElement("div", {
     className: "LM-output",
     dangerouslySetInnerHTML: {
       __html: output
     }
   }));
 };
-var LinkedMarkdownEditor = function LinkedMarkdownEditor(_ref3) {
-  var fileURI = _ref3.fileURI;
+const LinkedMarkdownEditor = ({
+  fileURI
+}) => {
+  const [input, setInput] = useState('');
+  const [output, setOutput] = useState('');
 
-  var _useState3 = useState(''),
-      input = _useState3[0],
-      setInput = _useState3[1];
-
-  var _useState4 = useState(''),
-      output = _useState4[0],
-      setOutput = _useState4[1];
-
-  var fetchAndSet = function fetchAndSet(newFileURI) {
-    fetchAndParse(newFileURI).then(function (_ref4) {
-      var file = _ref4.file,
-          parser = _ref4.parser;
+  const fetchAndSet = newFileURI => {
+    fetchAndParse(newFileURI).then(({
+      file,
+      parser
+    }) => {
       setInput(file || '');
       setOutput(parser.toHTML() || '');
       !!file && localStorage.setItem('saved-input', file);
     });
   };
 
-  useEffect(function () {
+  useEffect(() => {
     fetchAndSet(fileURI);
   }, [fileURI]);
-  useEffect(function () {
-    var parser = new LinkedMarkdown(input);
-    parser.parse().then(function () {
+  useEffect(() => {
+    const parser = new LinkedMarkdown(input);
+    parser.parse().then(() => {
       setOutput(parser.toHTML());
     });
     input !== '' && localStorage.setItem('saved-input', input);
   }, [input]);
-  useEffect(function () {
+  useEffect(() => {
     fetchAndSet(fileURI);
-    var savedInput = localStorage.getItem('saved-input');
+    const savedInput = localStorage.getItem('saved-input');
     !!savedInput && setInput(savedInput || '');
   }, []);
 
-  var handleInput = function handleInput(e) {
-    var target = e.target;
+  const handleInput = e => {
+    const target = e.target;
     setInput(target.value);
   };
 
