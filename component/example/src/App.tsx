@@ -5,7 +5,7 @@ import {
   LinkedMarkdownEditor,
 } from '@linkedmd/components'
 import './index.css'
-import '@linkedmd/component/dist/index.css'
+import '@linkedmd/components/dist/index.css'
 
 const App = () => {
   const startFileURI =
