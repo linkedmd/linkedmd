@@ -13,11 +13,15 @@ const DOMAIN_REGEX =
   /^(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})\.[a-z]{2,}$/
 const URL_REGEX =
   /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
-const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs'
+const IPFS_GATEWAY = 'ipfs.nftstorage.link'
 
 type LinkedMarkdownFile = {
   imports: Array<Import> | []
-  declarations: Object | any
+  declarations: {
+    imported: Object | any
+    local: Object | any
+    all: Object | any
+  }
   contents: string
 }
 
@@ -36,17 +40,23 @@ type Declaration = {
   remoteScope?: boolean
 }
 
+type Declarations = {
+  [name: string]: Declaration
+}
+
 function error(message: string) {
   console.error(`LinkedMarkdown compiler: ${message}`)
 }
 
 async function fetchPackageVersion(uri: string): Promise<string> {
-  const ipfsURI = uri.startsWith('ipfs://')
-    ? `${IPFS_GATEWAY}/${uri.split('ipfs://')[1]}`
-    : false
+  const parsedURI = new URL(uri)
+  uri =
+    parsedURI.protocol === 'ipfs:'
+      ? `https://${parsedURI.pathname.slice(2)}.${IPFS_GATEWAY}`
+      : uri
 
   try {
-    const req = await fetch(ipfsURI || uri)
+    const req = await fetch(uri)
     const file = await req.text()
     return file
   } catch (e) {
@@ -64,22 +74,23 @@ async function resolveImports(code: string): Promise<any> {
       const importedFile = new LinkedMarkdown(file)
       await importedFile.parse()
       unresolvedImport.namedImports?.map((namedImport: any) => {
-        if (!(namedImport.name in importedFile.data.declarations)) {
+        if (!(namedImport.name in importedFile.data.declarations.all)) {
           error(
             `Cannot find ${namedImport.value} in ${unresolvedImport.fromModule}`
           )
           return
         }
+        console.log(namedImport.value)
         // @ts-ignore
         importedDeclarations[namedImport.value] = {
-          value: importedFile.data.declarations[namedImport.name].value,
+          value: importedFile.data.declarations.all[namedImport.name].value,
           pkgVersionURI: unresolvedImport.fromModule,
         }
       })
-      Object.keys(importedFile.data.declarations).map((name) => {
+      Object.keys(importedFile.data.declarations.all).map((name) => {
         // @ts-ignore
         importedDeclarations[`${unresolvedImport.fromModule}#${name}`] = {
-          value: importedFile.data.declarations[name].value,
+          value: importedFile.data.declarations.all[name].value,
           pkgVersionURI: unresolvedImport.fromModule,
           remoteScope: true,
         }
@@ -182,40 +193,57 @@ function formatDeclarations(
   return newContents
 }
 
-function addDeclarationsTable(
+function createDeclarationsTable(
+  name: string,
   declarations: Object | any,
-  contents: string
-): string {
-  let declarationMap: any = ''
+  linkDeclarations?: boolean
+) {
+  let declarationTable: any = ''
   Object.keys(declarations).map((key) => {
     if (declarations[key].remoteScope) return
 
-    console.log(declarations[key])
-
-    declarationMap += `<tr id="Declaration/${formatDeclarationPath(
+    declarationTable += `<tr id="Declaration/${formatDeclarationPath(
       key,
       declarations[key].pkgVersionURI
-    )}"><td>${key}</td><td>${formatDeclarations(
+    )}"><td>${
+      !linkDeclarations
+        ? key
+        : `<a href="#LinkedMD-URI=${declarations[key].pkgVersionURI}#${key}">${key}</a>`
+    }</td><td>${formatDeclarations(
       declarations,
       formatValue(declarations[key].value).toString(),
       declarations[key].pkgVersionURI,
       true
     )}</td></tr>`
   })
-  declarationMap = `<table id="LinkedMarkdown-Declarations">${declarationMap}</table>`
-  let newContents = formatDeclarations(declarations, contents)
-  return `${declarationMap}${newContents}`
+  return `<h4>${name} declarations</h4><table class="LM-table">
+  ${declarationTable}</table>`
 }
 
-type Declarations = {
-  [name: string]: Declaration
+function addDeclarationsTables(
+  declarations: Object | any,
+  contents: string
+): string {
+  return `${
+    Object.keys(declarations.imported).length > 0
+      ? createDeclarationsTable('Imported', declarations.imported, true)
+      : ''
+  }${
+    Object.keys(declarations.local).length > 0
+      ? createDeclarationsTable('Local', declarations.local)
+      : ''
+  }${formatDeclarations(declarations.all, contents)}`
 }
 
 async function parse(file: string): Promise<LinkedMarkdownFile> {
   const splitFile = file.split(FILE_PART_DELIMITER)
   if (splitFile.length !== 3) {
     error("File doesn't have the required three sections")
-    return { imports: [], declarations: [], contents: '' }
+    return {
+      imports: [],
+      declarations: { imported: [], local: [], all: [] },
+      contents: '',
+    }
   }
   const importedDeclarations = await resolveImports(splitFile[0])
   const rawLocalDeclarations: any = yaml.load(splitFile[1])
@@ -226,21 +254,14 @@ async function parse(file: string): Promise<LinkedMarkdownFile> {
   const declarations = Object.assign(localDeclarations, importedDeclarations)
   const parsedFile: LinkedMarkdownFile = {
     imports: parseImports(splitFile[0]),
-    declarations,
+    declarations: {
+      imported: importedDeclarations,
+      local: localDeclarations,
+      all: declarations,
+    },
     contents: splitFile[2],
   }
   return parsedFile
-}
-
-function getInput(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const stdin = process.stdin
-    let data = ''
-    stdin.setEncoding('utf8')
-    stdin.on('data', (chunk) => (data += chunk))
-    stdin.on('end', () => resolve(data))
-    stdin.on('error', reject)
-  })
 }
 
 export class LinkedMarkdown {
@@ -257,9 +278,8 @@ export class LinkedMarkdown {
   }
 
   toHTML() {
-    console.log(this.data.declarations)
     return marked.parse(
-      addDeclarationsTable(this.data.declarations, this.data.contents)
+      addDeclarationsTables(this.data.declarations, this.data.contents)
     )
   }
 }
