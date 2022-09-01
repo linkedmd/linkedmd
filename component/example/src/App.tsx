@@ -20,7 +20,7 @@ const App = () => {
           }}
           style={{ cursor: 'pointer' }}
         >
-          Viewer
+          View
         </a>{' '}
         |{' '}
         <a
@@ -29,7 +29,7 @@ const App = () => {
           }}
           style={{ cursor: 'pointer' }}
         >
-          Editor
+          Edit
         </a>
       </h3>
       {edit ? (

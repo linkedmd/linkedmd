@@ -1,45 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { LinkedMarkdown } from '@linkedmd/parser';
 
-const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs';
+var IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs';
 
-const fetchAndParse = async fileURI => {
-  const ipfsURI = fileURI.startsWith('ipfs://') ? `${IPFS_GATEWAY}/${fileURI.split('ipfs://')[1]}` : false;
-  const data = await fetch(ipfsURI ? ipfsURI : fileURI);
-  const file = await data.text();
-  const parser = new LinkedMarkdown(file);
-  await parser.parse();
-  return {
-    file,
-    parser
-  };
+var fetchAndParse = function fetchAndParse(fileURI) {
+  try {
+    var ipfsURI = fileURI.startsWith('ipfs://') ? IPFS_GATEWAY + "/" + fileURI.split('ipfs://')[1] : false;
+    return Promise.resolve(fetch(ipfsURI ? ipfsURI : fileURI)).then(function (data) {
+      return Promise.resolve(data.text()).then(function (file) {
+        var parser = new LinkedMarkdown(file);
+        return Promise.resolve(parser.parse()).then(function () {
+          return {
+            file: file,
+            parser: parser
+          };
+        });
+      });
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
 };
 
-const LinkedMarkdownViewer = ({
-  fileURI,
-  onFileURIChange
-}) => {
-  const [fileStack, setFileStack] = useState([]);
-  const [output, setOutput] = useState('');
+var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
+  var fileURI = _ref.fileURI,
+      onFileURIChange = _ref.onFileURIChange;
 
-  const fetchAndSet = (newFileURI, addToStack) => {
-    fetchAndParse(newFileURI).then(({
-      parser
-    }) => {
+  var _useState = useState([]),
+      fileStack = _useState[0],
+      setFileStack = _useState[1];
+
+  var _useState2 = useState(''),
+      output = _useState2[0],
+      setOutput = _useState2[1];
+
+  var fetchAndSet = function fetchAndSet(newFileURI, addToStack) {
+    fetchAndParse(newFileURI).then(function (_ref2) {
+      var parser = _ref2.parser;
       addToStack && setFileStack(fileStack.concat([newFileURI]));
       setOutput(parser.toHTML() || '');
       onFileURIChange && onFileURIChange(newFileURI);
     });
   };
 
-  useEffect(() => {
+  useEffect(function () {
     fetchAndSet(fileURI, true);
   }, []);
-  window.addEventListener('message', event => {
+  window.addEventListener('message', function (event) {
     if (event.origin !== window.location.origin) return;
 
     try {
-      const newFileURI = JSON.parse(unescape(event.data)).lmURI;
+      var newFileURI = JSON.parse(unescape(event.data)).lmURI;
       fetchAndSet(newFileURI, true);
     } catch (e) {}
   }, false);
@@ -61,41 +72,45 @@ const LinkedMarkdownViewer = ({
     }
   }));
 };
-const LinkedMarkdownEditor = ({
-  fileURI
-}) => {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
+var LinkedMarkdownEditor = function LinkedMarkdownEditor(_ref3) {
+  var fileURI = _ref3.fileURI;
 
-  const fetchAndSet = newFileURI => {
-    fetchAndParse(newFileURI).then(({
-      file,
-      parser
-    }) => {
+  var _useState3 = useState(''),
+      input = _useState3[0],
+      setInput = _useState3[1];
+
+  var _useState4 = useState(''),
+      output = _useState4[0],
+      setOutput = _useState4[1];
+
+  var fetchAndSet = function fetchAndSet(newFileURI) {
+    fetchAndParse(newFileURI).then(function (_ref4) {
+      var file = _ref4.file,
+          parser = _ref4.parser;
       setInput(file || '');
       setOutput(parser.toHTML() || '');
       !!file && localStorage.setItem('saved-input', file);
     });
   };
 
-  useEffect(() => {
+  useEffect(function () {
     fetchAndSet(fileURI);
   }, [fileURI]);
-  useEffect(() => {
-    const parser = new LinkedMarkdown(input);
-    parser.parse().then(() => {
+  useEffect(function () {
+    var parser = new LinkedMarkdown(input);
+    parser.parse().then(function () {
       setOutput(parser.toHTML());
     });
     input !== '' && localStorage.setItem('saved-input', input);
   }, [input]);
-  useEffect(() => {
+  useEffect(function () {
     fetchAndSet(fileURI);
-    const savedInput = localStorage.getItem('saved-input');
+    var savedInput = localStorage.getItem('saved-input');
     !!savedInput && setInput(savedInput || '');
   }, []);
 
-  const handleInput = e => {
-    const target = e.target;
+  var handleInput = function handleInput(e) {
+    var target = e.target;
     setInput(target.value);
   };
 

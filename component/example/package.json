@@ -1,8 +1,6 @@
 {
-  "name": "@linkedmd/component-example",
-  "homepage": ".",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@linkedmd/viewer",
+  "version": "0.0.1",
   "scripts": {
     "start": "node ../node_modules/react-scripts/bin/react-scripts.js start",
     "build": "node ../node_modules/react-scripts/bin/react-scripts.js build",
