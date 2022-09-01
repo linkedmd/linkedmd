@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
 import { marked } from 'marked'
-import { LinkedMarkdownViewer, LinkedMarkdownEditor } from '@linkedmd/component'
+import {
+  LinkedMarkdownViewer,
+  LinkedMarkdownEditor,
+} from '@linkedmd/components'
 import './index.css'
 import '@linkedmd/component/dist/index.css'
 
