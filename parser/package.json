@@ -1,6 +1,6 @@
 {
   "name": "@linkedmd/parser",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "dependencies": {
     "js-yaml": "^4.1.0",
