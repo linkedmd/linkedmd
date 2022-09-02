@@ -50,13 +50,23 @@ function error(message: string) {
 
 async function fetchPackageVersion(uri: string): Promise<string> {
   const parsedURI = new URL(uri)
-  uri =
-    parsedURI.protocol === 'ipfs:'
-      ? `https://${parsedURI.pathname.slice(2)}.${IPFS_GATEWAY}`
-      : uri
+  console.log(uri)
+  console.log(parsedURI)
+  // Blink, Gecko and WebKit parse URLs differently
+  let fetchURI = uri
+
+  if (parsedURI.protocol === 'ipfs:') {
+    const cid =
+      parsedURI.hostname !== ''
+        ? parsedURI.hostname
+        : parsedURI.pathname.slice(2)
+    fetchURI = `https://${cid}.${IPFS_GATEWAY}`
+  }
+
+  console.log(fetchURI)
 
   try {
-    const req = await fetch(uri)
+    const req = await fetch(fetchURI)
     const file = await req.text()
     return file
   } catch (e) {
