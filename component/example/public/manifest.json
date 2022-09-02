@@ -1,6 +1,6 @@
 {
-  "short_name": "@linkedmd/component",
-  "name": "@linkedmd/component",
+  "short_name": "Linked Markdown",
+  "name": "Linked Markdown",
   "icons": [
     {
       "src": "favicon.ico",
