@@ -19,6 +19,11 @@
 
 .LM-table {
   display: table;
+  table-layout: fixed;
+}
+
+.LM-table tr {
+  overflow-wrap: break-word;
 }
 
 textarea {

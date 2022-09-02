@@ -46,10 +46,10 @@ This below is a Linked Markdown document, go play with it!
 
   return (
     <>
-      <div
-        style={{ maxWidth: '768px', margin: 'auto' }}
-        dangerouslySetInnerHTML={getMarkdownText()}
-      />
+      <div style={{ maxWidth: '768px', margin: 'auto' }}>
+        <h1>⍈</h1>
+        <div dangerouslySetInnerHTML={getMarkdownText()}></div>
+      </div>
       <h3 style={{ textAlign: 'center' }}>
         <a
           onClick={() => {

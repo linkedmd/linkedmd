@@ -19,6 +19,11 @@
 
 :global(.LM-table) {
   display: table;
+  table-layout: fixed;
+}
+
+:global(.LM-table tr) {
+  overflow-wrap: break-word;
 }
 
 textarea {
