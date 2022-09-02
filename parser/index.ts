@@ -50,8 +50,7 @@ function error(message: string) {
 
 async function fetchPackageVersion(uri: string): Promise<string> {
   const parsedURI = new URL(uri)
-  console.log(uri)
-  console.log(parsedURI)
+
   // Blink, Gecko and WebKit parse URLs differently
   let fetchURI = uri
 
@@ -62,8 +61,6 @@ async function fetchPackageVersion(uri: string): Promise<string> {
         : parsedURI.pathname.slice(2)
     fetchURI = `https://${cid}.${IPFS_GATEWAY}`
   }
-
-  console.log(fetchURI)
 
   try {
     const req = await fetch(fetchURI)
