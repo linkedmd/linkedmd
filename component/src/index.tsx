@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { LinkedMarkdown } from '@linkedmd/parser'
 import './styles.css'
+import 'process'
 
 const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs'
 

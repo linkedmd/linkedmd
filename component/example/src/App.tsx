@@ -9,7 +9,7 @@ import '@linkedmd/components/dist/index.css'
 
 const App = () => {
   const startFileURI =
-    'https://raw.githubusercontent.com/nation3/linked-md/main/examples/DomainEscrow.linked.md'
+    'http://localhost:8000/examples/DomainAgreement.linked.md'
   const [edit, setEdit] = useState(false)
   const [fileURI, setFileURI] = useState(startFileURI)
 
