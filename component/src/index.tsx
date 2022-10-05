@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { LinkedMarkdown } from '@linkedmd/parser'
 import './styles.css'
+import 'process'
 
 const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs'
 
@@ -46,7 +47,6 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
 
         try {
           const newFileURI = JSON.parse(unescape(event.data)).lmURI
-          console.log(newFileURI)
           fetchAndSet(newFileURI, true)
         } catch (e) {}
       },

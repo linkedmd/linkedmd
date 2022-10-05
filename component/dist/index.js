@@ -75,7 +75,6 @@ var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
 
       try {
         var newFileURI = JSON.parse(unescape(event.data)).lmURI;
-        console.log(newFileURI);
         fetchAndSet(newFileURI, true);
       } catch (e) {}
     }, false);

@@ -1,323 +1,213 @@
-// @ts-ignore
-import parseImports from 'parse-es6-imports'
-// @ts-ignore
-import yaml from 'js-yaml'
-import { marked } from 'marked'
-
-const FILE_PART_DELIMITER = '---'
-// Safari doesn't support look behind (<=)
-// const REFERENCE_REGEX = /(?<=\[\[)([^\[\]]*)(?=\]\])/g
-const DECLARATION_REGEX = /(?:\[\[)([^\[\]]*)(?=\]\])/g
-const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
-const DOMAIN_REGEX =
-  /^(((?!\-))(xn\-\-)?[a-z0-9\-_]{0,61}[a-z0-9]{1,1}\.)*(xn\-\-)?([a-z0-9\-]{1,61}|[a-z0-9\-]{1,30})\.[a-z]{2,}$/
-const URL_REGEX =
-  /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
+const VARIABLE_REGEX = /\[%(.*?)\]/g
 const IPFS_GATEWAY = 'ipfs.nftstorage.link'
 
-type LinkedMarkdownFile = {
-  imports: Array<Import> | []
-  declarations: {
-    imported: Object | any
-    local: Object | any
-    all: Object | any
+import fetch from 'cross-fetch'
+import MarkdownIt from 'markdown-it'
+// @ts-ignore
+import MarkdownItDefList from 'markdown-it-deflist'
+// @ts-ignore
+import MarkdownItAbbr from 'markdown-it-abbr'
+import MarkdownItAttrs from 'markdown-it-attrs'
+// @ts-ignore
+import MarkdownItDirective from 'markdown-it-directive'
+import { markdownItFancyListPlugin } from 'markdown-it-fancy-lists'
+
+const arrayToObject = (array: Array<any>, key: string): any => {
+  const initialValue = {}
+  return array.reduce(
+    (obj: Object, item: any) => ({ ...obj, [item[key]]: item }),
+    initialValue
+  )
+}
+
+const replaceVariables = (text: string, definitions: any): string => {
+  if (!text) return ''
+  for (const match of text?.matchAll(VARIABLE_REGEX)) {
+    if (!definitions[match[1]]) continue
+    text = text.replaceAll(match[0], definitions[match[1]])
   }
-  contents: string
-}
-
-type Import = {
-  defaultImport?: string
-  namedImports?: Array<{
-    name: string
-    value: string
-  }>
-  fromModule: string
-}
-
-type Declaration = {
-  value: string
-  pkgVersionURI?: string
-  remoteScope?: boolean
-}
-
-type Declarations = {
-  [name: string]: Declaration
-}
-
-function error(message: string) {
-  console.error(`LinkedMarkdown compiler: ${message}`)
+  return text
 }
 
 async function fetchPackageVersion(uri: string): Promise<string> {
   const parsedURI = new URL(uri)
-
-  // Blink, Gecko and WebKit parse URLs differently
-  let fetchURI = uri
-
   if (parsedURI.protocol === 'ipfs:') {
+    // Blink, Gecko and WebKit parse URLs differently
     const cid =
       parsedURI.hostname !== ''
         ? parsedURI.hostname
         : parsedURI.pathname.slice(2)
-    fetchURI = `https://${cid}.${IPFS_GATEWAY}`
+    uri = `https://${cid}.${IPFS_GATEWAY}`
   }
 
   try {
-    const req = await fetch(fetchURI)
-    const file = await req.text()
-    return file
+    return (await fetch(uri)).text()
   } catch (e) {
-    error(`Fetching package version was impossible (URI ${uri})`)
+    Error(`Fetching package version was impossible (URI ${uri})`)
     return ''
   }
 }
 
-async function resolveImports(code: string): Promise<any> {
-  const imports = parseImports(code)
-  const importedDeclarations = {}
-  await Promise.all(
-    imports.map(async (unresolvedImport: Import) => {
-      const file = await fetchPackageVersion(unresolvedImport.fromModule)
-      const importedFile = new LinkedMarkdown(file)
-      await importedFile.parse()
-      unresolvedImport.namedImports?.map((namedImport: any) => {
-        if (!(namedImport.name in importedFile.data.declarations.all)) {
-          error(
-            `Cannot find ${namedImport.value} in ${unresolvedImport.fromModule}`
-          )
-          return
-        }
-        // @ts-ignore
-        importedDeclarations[namedImport.value] = {
-          value: importedFile.data.declarations.all[namedImport.name].value,
-          pkgVersionURI: unresolvedImport.fromModule,
-        }
-      })
-      Object.keys(importedFile.data.declarations.all).map((name) => {
-        // @ts-ignore
-        importedDeclarations[`${unresolvedImport.fromModule}#${name}`] = {
-          value: importedFile.data.declarations.all[name].value,
-          pkgVersionURI: unresolvedImport.fromModule,
-          remoteScope: true,
-        }
-      })
-    })
-  )
-  return importedDeclarations
+type Import = {
+  default?: string
+  named?: Array<{
+    localName: string
+    remoteName: string
+  }>
+  from: string
+  lm: LinkedMarkdown | any
 }
 
-const Link = ({ href, text }: { href: string; text: string }) =>
-  `<a href="${href}" rel="noreferrer" target="_blank">${text}</a>`
-
-const LMLinkAction = ({ uri }: { uri: string }) =>
-  `onClick="window.postMessage('${escape(
-    JSON.stringify({
-      lmURI: uri,
-    })
-  )}')"`
-
-function formatValue(value: string | number | Date): string | number | Date {
-  if (typeof value === 'string') {
-    if (
-      value.match(ETH_ADDRESS_REGEX) ||
-      (value.match(DOMAIN_REGEX) && value.endsWith('.eth'))
-    ) {
-      return Link({
-        href: `https://etherscan.io/address/${value}`,
-        text: value,
-      })
-    } else if (value.match(DOMAIN_REGEX)) {
-      return Link({ href: `https://${value}`, text: value })
-    } else if (value.match(URL_REGEX)) {
-      return Link({ href: value, text: value })
-    }
-  } else if (value instanceof Date) {
-    return value.toUTCString()
-  }
-  return value
+type Definitions = {
+  [name: string]: string
 }
 
-function formatDeclarationPath(name: string, pkgVersionURI?: string) {
-  return pkgVersionURI ? `${pkgVersionURI}#${name}` : name
-}
-
-function discoverDeclaration(
-  declarations: Object | any,
-  name: string,
-  pkgVersionURI?: string
-) {
-  let declarationPath = formatDeclarationPath(name, pkgVersionURI)
-  let declaration = declarations[declarationPath]
-
-  if (declaration?.pkgVersionURI) {
-    declarationPath = formatDeclarationPath(name, declaration.pkgVersionURI)
-    declaration = declarations[declarationPath]
-  }
-
-  return { declaration, declarationPath }
-}
-
-function enrichDeclarations(
-  declarations: Object | any,
-  input: string,
-  pkgVersionURI?: string
-) {
-  const matches = Array.from(input.matchAll(DECLARATION_REGEX))
-  let newContents = input
-  for (const decl of matches) {
-    const name = decl[1]
-
-    let { declaration, declarationPath } = discoverDeclaration(
-      declarations,
-      name,
-      pkgVersionURI
-    )
-
-    if (!declarations[declarationPath]) {
-      error(`Declaration ${declarationPath} not found`)
-      continue
-    }
-
-    newContents = newContents.replaceAll(
-      `[[${name}]]`,
-      `${name} (${enrichDeclarations(
-        declarations,
-        declarations[declarationPath].value,
-        pkgVersionURI || declaration?.pkgVersionURI
-      )})`
-    )
-  }
-  return newContents
-}
-
-function formatDeclarations(
-  declarations: Object | any,
-  input: string,
-  pkgVersionURI?: string,
-  formatForTable?: boolean
-): string {
-  const matches = Array.from(input.matchAll(DECLARATION_REGEX))
-  let newContents = input
-  for (const decl of matches) {
-    const name = decl[1]
-    let { declaration, declarationPath } = discoverDeclaration(
-      declarations,
-      name,
-      pkgVersionURI
-    )
-
-    const decError = !declaration && `style="color: red"`
-    decError && error(`Declaration ${name} not found`)
-
-    const decTooltip = !decError
-      ? `data-tooltip="${enrichDeclarations(
-          declarations,
-          declaration.value,
-          pkgVersionURI || declaration?.pkgVersionURI
-        )}"`
-      : `data-tooltip="Declaration ${name} not found"`
-
-    const action =
-      formatForTable &&
-      (declarationPath.match(URL_REGEX) ||
-        declarationPath.startsWith('ipfs://'))
-        ? LMLinkAction({
-            uri: declarationPath,
-          })
-        : `href="#Declaration/${declarationPath}"`
-
-    newContents = newContents.replaceAll(
-      `[[${name}]]`,
-      `<a ${action} style="cursor: pointer" class="LM-dec" ${decTooltip} ${decError}>${name}</a>`
-    )
-  }
-  return newContents
-}
-
-function createDeclarationsTable(
-  name: string,
-  declarations: Object | any,
-  linkDeclarations?: boolean
-) {
-  let declarationTable: any = ''
-  Object.keys(declarations).map((key) => {
-    if (declarations[key].remoteScope) return
-
-    declarationTable += `<tr id="Declaration/${formatDeclarationPath(
-      key,
-      declarations[key].pkgVersionURI
-    )}"><td>${
-      !linkDeclarations
-        ? key
-        : `<a style="cursor: pointer" ${LMLinkAction({
-            uri: `${declarations[key].pkgVersionURI}#${key}`,
-          })}>${key}</a>`
-    }</td><td>${formatDeclarations(
-      declarations,
-      formatValue(declarations[key].value).toString(),
-      declarations[key].pkgVersionURI,
-      true
-    )}</td></tr>`
-  })
-  return `<h4>${name} declarations</h4><table class="LM-table">
-  ${declarationTable}</table>`
-}
-
-function wrap(declarations: Object | any, contents: string): string {
-  return `${
-    Object.keys(declarations.imported).length > 0
-      ? createDeclarationsTable('Imported', declarations.imported, true)
-      : ''
-  }${
-    Object.keys(declarations.local).length > 0
-      ? createDeclarationsTable('Local', declarations.local)
-      : ''
-  }${formatDeclarations(declarations.all, contents)}`
-}
-
-async function parse(file: string): Promise<LinkedMarkdownFile> {
-  const splitFile = file.split(FILE_PART_DELIMITER)
-  if (splitFile.length !== 3) {
-    error("File doesn't have the required three sections")
-    return {
-      imports: [],
-      declarations: { imported: [], local: [], all: [] },
-      contents: '',
-    }
-  }
-  const importedDeclarations = await resolveImports(splitFile[0])
-  const rawLocalDeclarations: any = yaml.load(splitFile[1])
-  const localDeclarations: Declarations = {}
-  Object.keys(rawLocalDeclarations).map((name: string) => {
-    localDeclarations[name] = { value: rawLocalDeclarations[name] }
-  })
-  const declarations = Object.assign(localDeclarations, importedDeclarations)
-  const parsedFile: LinkedMarkdownFile = {
-    imports: parseImports(splitFile[0]),
-    declarations: {
-      imported: importedDeclarations,
-      local: localDeclarations,
-      all: declarations,
-    },
-    contents: splitFile[2],
-  }
-  return parsedFile
+type RemoteDefinitions = {
+  [name: string]: { value: string; from: string }
 }
 
 export class LinkedMarkdown {
   input: string
-  data!: LinkedMarkdownFile
+  imports: Import[]
+  definitions: Definitions
+  remoteDefinitions: RemoteDefinitions
 
   constructor(input: string) {
     this.input = input
+    this.imports = [] as Import[]
+    this.definitions = {}
+    this.remoteDefinitions = {} as RemoteDefinitions
   }
 
-  async parse(): Promise<LinkedMarkdownFile> {
-    this.data = await parse(this.input)
-    return this.data
+  async parse() {
+    // Parses definitions into [{ key, value }]
+    let definitionsArray = this.input
+      .split('---')[0]
+      .split('\n\n')
+      .map((definitionBlock) => {
+        let [name, value] = definitionBlock.split('\n: ')
+        return { name, value }
+      })
+      .filter(({ name, value }) => name && value)
+
+    // Parses imports (with nested parsing)
+    this.imports = await Promise.all(
+      definitionsArray.map(async ({ name, value }) => {
+        if (!value.startsWith('Import ')) return
+        let importObj: any = {}
+        if (value.startsWith('Import definitions ')) {
+          let named = name.split(', ').map((nameBlock) => {
+            const names = nameBlock.split(' as ')
+            return {
+              localName: names[1] || nameBlock,
+              remoteName: names[0] || nameBlock,
+            }
+          })
+          importObj = {
+            named,
+            from: value.replace('Import definitions ', ''),
+          }
+        } else if (value.startsWith('Import ')) {
+          importObj = {
+            default: name,
+            from: value.replace('Import ', ''),
+          }
+        }
+        const file = await fetchPackageVersion(importObj.from)
+        importObj.lm = new LinkedMarkdown(file)
+        await importObj.lm.parse()
+        return importObj
+      })
+    )
+
+    // Filters out undefined imports
+    this.imports = this.imports.filter((imports) => imports)
+
+    // Converts array to object
+    definitionsArray
+      .filter(({ value }) => !value.startsWith('Import '))
+      .map(({ name, value }) => (this.definitions[name] = value))
+
+    // Takes imported definitions locally and saves remote ones too
+    this.imports.map((importObj: Import) => {
+      if (!importObj.named) return
+      importObj.named.map((namedImport: any) => {
+        this.definitions[namedImport.localName] =
+          importObj.lm.definitions[namedImport.remoteName]
+      })
+      Object.keys(importObj.lm.definitions).map((key: string) => {
+        this.remoteDefinitions[key] = {
+          value: importObj.lm.definitions[key],
+          from: importObj.from,
+        }
+      })
+    })
+
+    // Substitutes variables with their value
+    Object.keys(this.definitions).map((name: any) => {
+      this.definitions[name] = replaceVariables(
+        this.definitions[name],
+        this.definitions
+      )
+    })
   }
 
-  toHTML() {
-    return marked.parse(wrap(this.data.declarations, this.data.contents))
+  toMarkdown(overrideDefinitions?: Definitions) {
+    if (overrideDefinitions) {
+      this.definitions = Object.assign(this.definitions, overrideDefinitions)
+    }
+
+    let defList = ''
+    let abbrList = ''
+    Object.keys(this.definitions).map((name) => {
+      defList += `${name} {#${encodeURI(name)}}\n: ${
+        this.definitions[name]
+      }\n\n`
+      abbrList += `*[${name}]: ${this.definitions[name]}\n`
+    })
+    Object.keys(this.remoteDefinitions).map((name) => {
+      abbrList += `*[${name}]: ${this.remoteDefinitions[name].value} | ${this.remoteDefinitions[name].from}\n`
+    })
+    defList += '---\n'
+
+    const content = replaceVariables(
+      this.input.split('---')[1],
+      this.definitions
+    )
+
+    if (overrideDefinitions && overrideDefinitions['Definitions'] !== 'true')
+      defList = ''
+
+    return defList + abbrList + content
+  }
+
+  toHTML(overrideDefinitions?: Definitions) {
+    const md = new MarkdownIt({
+      html: false,
+      xhtmlOut: false,
+      linkify: true,
+      typographer: true,
+      quotes: '“”‘’',
+    })
+    md.use(MarkdownItDefList)
+      .use(MarkdownItAbbr)
+      .use(MarkdownItAttrs)
+      .use(MarkdownItDirective)
+      // @ts-ignore
+      .use(markdownItFancyListPlugin)
+      .use((md: any) => {
+        md.inlineDirectives['include'] = (
+          state: any,
+          content: any,
+          dests: any,
+          attrs: any
+        ) => {
+          const token = state.push('html_inline', '', 0)
+          token.content = arrayToObject(this.imports, 'default')[
+            content
+          ].lm.toHTML(attrs)
+        }
+      })
+    return md.render(this.toMarkdown(overrideDefinitions))
   }
 }
