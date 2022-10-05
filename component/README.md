@@ -10,17 +10,26 @@
 npm install --save @linkedmd/component
 ```
 
+or
+
+```bash
+yarn add @linkedmd/component
+```
+
 ## Usage
 
 ```tsx
 import React, { Component } from 'react'
 
-import MyComponent from '@linkedmd/component'
+import { LinkedMarkdownViewer } from '@linkedmd/component'
 import '@linkedmd/component/dist/index.css'
 
 class Example extends Component {
   render() {
-    return <MyComponent />
+    return
+      <LinkedMarkdownViewer
+        fileURI="ipfs://bafkreibrzdmvj3n3inklvyjp5c5wmqv4w6jnafz5paaxfyk27v47gjxmhe"
+      />
   }
 }
 ```
