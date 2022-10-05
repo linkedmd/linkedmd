@@ -34,6 +34,8 @@ class Example extends Component {
 }
 ```
 
+For a full-on example, [check this](https://github.com/linkedmd/linkedmd/blob/main/component/example/src/App.tsx).
+
 ## License
 
 MIT © [nation3](https://github.com/nation3)
