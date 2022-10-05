@@ -32,7 +32,3 @@ Transfer of the Domain Name. The Domain Name is registered with Registrar, an IC
 Further Assurances. Seller shall take all necessary actions, including providing all necessary documentation to Purchaser in order to transfer Domain Name to Purchaser.
 Governing Law. This Agreement is made under and shall be governed by and interpreted in accordance with the laws of Nation3, without regard to that state’s choice of law principles, which may direct the application of the laws of another jurisdiction.
 Entire Agreement. This Agreement constitutes and contains the entire agreement between the parties with respect to the subject matter herein and supersedes any prior oral or written agreements. This Agreement cannot be changed, modified, amended, or supplemented, except in writing signed by all parties hereto. IN WITNESS WHEREOF, Seller and Purchaser have caused this Agreement to be executed by their duly authorized representatives.
-
-## 2. Software license
-
-:include[MIT]{"Year"="2022" "Copyright holder"="[%Purchaser]"}
