@@ -1,7 +1,5 @@
 const VARIABLE_REGEX = /\[%(.*?)\]/g
 const IPFS_GATEWAY = 'ipfs.nftstorage.link'
-const BASIC_CSS =
-  '<meta charset="UTF-8"><style> @import "https://unpkg.com/style.css/style.css"; @import "https://unpkg.com/css-tooltip"; dt:target a { outline: 2px solid yellow }</style>'
 
 import fetch from 'cross-fetch'
 import MarkdownIt from 'markdown-it'
@@ -210,6 +208,6 @@ export class LinkedMarkdown {
           ].lm.toHTML(attrs)
         }
       })
-    return BASIC_CSS + md.render(this.toMarkdown(overrideDefinitions))
+    return md.render(this.toMarkdown(overrideDefinitions))
   }
 }
