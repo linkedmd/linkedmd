@@ -1,5 +1,6 @@
 /// <reference types="react" />
 import './styles.css';
+import 'process';
 declare type FileURICallback = (newFileURI: string) => any;
 interface Props {
     fileURI: string;

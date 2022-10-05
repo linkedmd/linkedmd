@@ -1,5 +1,4 @@
 @import "https://unpkg.com/style.css/style.css";
-@import "https://unpkg.com/css-tooltip";
 
 :global(.LM-split-screen) {
   display: flex;

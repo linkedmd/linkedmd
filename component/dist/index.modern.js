@@ -72,7 +72,10 @@ var LinkedMarkdownViewer = function LinkedMarkdownViewer(_ref) {
 
       try {
         var newFileURI = JSON.parse(unescape(event.data)).lmURI;
+<<<<<<< HEAD
         console.log(newFileURI);
+=======
+>>>>>>> 90f8ca859db3ae21c09a9a32d7a49b8ea95aa0e1
         fetchAndSet(newFileURI, true);
       } catch (e) {}
     }, false);
