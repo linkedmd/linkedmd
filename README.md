@@ -9,7 +9,7 @@ NATION
 : Import definitions ipfs://bafkreibrzdmvj3n3inklvyjp5c5wmqv4w6jnafz5paaxfyk27v47gjxmhe
 
 Domain Name
-: google.com by [%Purchaser]
+: google.com
 
 Seller
 : 0xbac3ab60a1643e5f5de8eb62cb4bb232711d9dcd
@@ -24,8 +24,6 @@ Purchase Price
 : 12 NATION
 
 ---
-
-1 Registrar
 
 ## 1. Domain Name Sale and Ownership Transfer Agreement
 
