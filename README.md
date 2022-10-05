@@ -41,11 +41,10 @@ Governing Law. This Agreement is made under and shall be governed by and interpr
 Entire Agreement. This Agreement constitutes and contains the entire agreement between the parties with respect to the subject matter herein and supersedes any prior oral or written agreements. This Agreement cannot be changed, modified, amended, or supplemented, except in writing signed by all parties hereto. IN WITNESS WHEREOF, Seller and Purchaser have caused this Agreement to be executed by their duly authorized representatives.
 ```
 
-A Linked Markdown document has 3 sections:
+A Linked Markdown document has two sections:
 
-- A first section with the data it imports, using [ES6 imports](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import).
-- A second section declaring the variables that the rest of the document will consume, using [YAML](https://yaml.org).
-- A third section with its content, in Markdown.
+- A first section with definitions, both local and remotely imported ones.
+- A second section with its content, in Markdown.
 
 ## Uses
 
