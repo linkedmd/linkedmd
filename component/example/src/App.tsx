@@ -7,14 +7,11 @@ import {
 import './index.css'
 import '@linkedmd/components/dist/index.css'
 
-const App = () => {
-  const startFileURI =
-    'http://localhost:8000/examples/DomainAgreement.linked.md'
-  const [edit, setEdit] = useState(false)
-  const [fileURI, setFileURI] = useState(startFileURI)
+import tippy, { inlinePositioning } from 'tippy.js'
+import 'tippy.js/dist/tippy.css'
 
-  function getMarkdownText() {
-    const rawMarkup = marked.parse(`
+function getMarkdownText() {
+  const rawMarkup = marked.parse(`
 
 # Linked Markdown
 
@@ -35,14 +32,22 @@ The main intended use is writing legal agreements and law. Linked Markdown provi
 
 - Import data and definitions from other documents, reducing the need to repeat a definition and the risk of omitting it, which in turn increases precision of language.
 - Quickly create sound agreements by importing existing definitions from other documents. An open-source approach to law.
-  - There's a [work in progress repository for Linked Markdown documents](https://repo.linked.md)
+- There's a [work in progress repository for Linked Markdown documents](https://repo.linked.md)
 - Clearly define data at the beginning of a document, avoiding subjective definitions and loose ends.
 - Reference such data in the document and know at a glance the value of the references.
 
 This below is a Linked Markdown document, go play with it!
-      `)
-    return { __html: rawMarkup }
-  }
+    `)
+  return { __html: rawMarkup }
+}
+
+const App = () => {
+  const startFileURI =
+    'http://localhost:8000/examples/DomainAgreement.linked.md'
+  const [edit, setEdit] = useState(false)
+  const [fileURI, setFileURI] = useState(startFileURI)
+
+  window['tippy'] = tippy
 
   return (
     <>
@@ -78,8 +83,17 @@ This below is a Linked Markdown document, go play with it!
           <LinkedMarkdownViewer
             fileURI={fileURI}
             onFileURIChange={(newFileURI) => {
-              console.log(newFileURI)
               setFileURI(newFileURI)
+              setTimeout(() => {
+                // @ts-ignore
+                tippy('abbr[title]', {
+                  // @ts-ignore
+                  content: (ref) => ref.getAttribute('title'),
+                  placement: 'bottom',
+                  inlinePositioning: true,
+                  plugins: [inlinePositioning],
+                })
+              })
             }}
           />
         </div>

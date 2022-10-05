@@ -17,7 +17,7 @@ const IPFS_GATEWAY = 'ipfs.nftstorage.link'
 
 type LinkedMarkdownFile = {
   imports: Array<Import> | []
-  declarations: {
+  definitions: {
     imported: Object | any
     local: Object | any
     all: Object | any
@@ -34,14 +34,14 @@ type Import = {
   fromModule: string
 }
 
-type Declaration = {
+type Definition = {
   value: string
   pkgVersionURI?: string
   remoteScope?: boolean
 }
 
-type Declarations = {
-  [name: string]: Declaration
+type Definitions = {
+  [name: string]: Definition
 }
 
 function error(message: string) {
@@ -74,36 +74,36 @@ async function fetchPackageVersion(uri: string): Promise<string> {
 
 async function resolveImports(code: string): Promise<any> {
   const imports = parseImports(code)
-  const importedDeclarations = {}
+  const importedDefinitions = {}
   await Promise.all(
     imports.map(async (unresolvedImport: Import) => {
       const file = await fetchPackageVersion(unresolvedImport.fromModule)
       const importedFile = new LinkedMarkdown(file)
       await importedFile.parse()
       unresolvedImport.namedImports?.map((namedImport: any) => {
-        if (!(namedImport.name in importedFile.data.declarations.all)) {
+        if (!(namedImport.name in importedFile.data.definitions.all)) {
           error(
             `Cannot find ${namedImport.value} in ${unresolvedImport.fromModule}`
           )
           return
         }
         // @ts-ignore
-        importedDeclarations[namedImport.value] = {
-          value: importedFile.data.declarations.all[namedImport.name].value,
+        importedDefinitions[namedImport.value] = {
+          value: importedFile.data.definitions.all[namedImport.name].value,
           pkgVersionURI: unresolvedImport.fromModule,
         }
       })
-      Object.keys(importedFile.data.declarations.all).map((name) => {
+      Object.keys(importedFile.data.definitions.all).map((name) => {
         // @ts-ignore
-        importedDeclarations[`${unresolvedImport.fromModule}#${name}`] = {
-          value: importedFile.data.declarations.all[name].value,
+        importedDefinitions[`${unresolvedImport.fromModule}#${name}`] = {
+          value: importedFile.data.definitions.all[name].value,
           pkgVersionURI: unresolvedImport.fromModule,
           remoteScope: true,
         }
       })
     })
   )
-  return importedDeclarations
+  return importedDefinitions
 }
 
 const Link = ({ href, text }: { href: string; text: string }) =>
@@ -137,28 +137,28 @@ function formatValue(value: string | number | Date): string | number | Date {
   return value
 }
 
-function formatDeclarationPath(name: string, pkgVersionURI?: string) {
+function formatDefinitionPath(name: string, pkgVersionURI?: string) {
   return pkgVersionURI ? `${pkgVersionURI}#${name}` : name
 }
 
-function discoverDeclaration(
-  declarations: Object | any,
+function discoverDefinition(
+  definitions: Object | any,
   name: string,
   pkgVersionURI?: string
 ) {
-  let declarationPath = formatDeclarationPath(name, pkgVersionURI)
-  let declaration = declarations[declarationPath]
+  let definitionPath = formatDefinitionPath(name, pkgVersionURI)
+  let definition = definitions[definitionPath]
 
-  if (declaration?.pkgVersionURI) {
-    declarationPath = formatDeclarationPath(name, declaration.pkgVersionURI)
-    declaration = declarations[declarationPath]
+  if (definition?.pkgVersionURI) {
+    definitionPath = formatDefinitionPath(name, definition.pkgVersionURI)
+    definition = definitions[definitionPath]
   }
 
-  return { declaration, declarationPath }
+  return { definition, definitionPath }
 }
 
-function enrichDeclarations(
-  declarations: Object | any,
+function enrichDefinitions(
+  definitions: Object | any,
   input: string,
   pkgVersionURI?: string
 ) {
@@ -167,31 +167,31 @@ function enrichDeclarations(
   for (const decl of matches) {
     const name = decl[1]
 
-    let { declaration, declarationPath } = discoverDeclaration(
-      declarations,
+    let { definition, definitionPath } = discoverDefinition(
+      definitions,
       name,
       pkgVersionURI
     )
 
-    if (!declarations[declarationPath]) {
-      error(`Declaration ${declarationPath} not found`)
+    if (!definitions[definitionPath]) {
+      error(`Definition ${definitionPath} not found`)
       continue
     }
 
     newContents = newContents.replaceAll(
       `[[${name}]]`,
-      `${name} (${enrichDeclarations(
-        declarations,
-        declarations[declarationPath].value,
-        pkgVersionURI || declaration?.pkgVersionURI
+      `${name} (${enrichDefinitions(
+        definitions,
+        definitions[definitionPath].value,
+        pkgVersionURI || definition?.pkgVersionURI
       )})`
     )
   }
   return newContents
 }
 
-function formatDeclarations(
-  declarations: Object | any,
+function formatDefinitions(
+  definitions: Object | any,
   input: string,
   pkgVersionURI?: string,
   formatForTable?: boolean
@@ -200,31 +200,30 @@ function formatDeclarations(
   let newContents = input
   for (const decl of matches) {
     const name = decl[1]
-    let { declaration, declarationPath } = discoverDeclaration(
-      declarations,
+    let { definition, definitionPath } = discoverDefinition(
+      definitions,
       name,
       pkgVersionURI
     )
 
-    const decError = !declaration && `style="color: red"`
-    decError && error(`Declaration ${name} not found`)
+    const decError = !definition && `style="color: red"`
+    decError && error(`Definition ${name} not found`)
 
     const decTooltip = !decError
-      ? `data-tooltip="${enrichDeclarations(
-          declarations,
-          declaration.value,
-          pkgVersionURI || declaration?.pkgVersionURI
+      ? `data-tooltip="${enrichDefinitions(
+          definitions,
+          definition.value,
+          pkgVersionURI || definition?.pkgVersionURI
         )}"`
-      : `data-tooltip="Declaration ${name} not found"`
+      : `data-tooltip="Definition ${name} not found"`
 
     const action =
       formatForTable &&
-      (declarationPath.match(URL_REGEX) ||
-        declarationPath.startsWith('ipfs://'))
+      (definitionPath.match(URL_REGEX) || definitionPath.startsWith('ipfs://'))
         ? LMLinkAction({
-            uri: declarationPath,
+            uri: definitionPath,
           })
-        : `href="#Declaration/${declarationPath}"`
+        : `href="#Definition/${definitionPath}"`
 
     newContents = newContents.replaceAll(
       `[[${name}]]`,
@@ -234,45 +233,45 @@ function formatDeclarations(
   return newContents
 }
 
-function createDeclarationsTable(
+function createDefinitionsTable(
   name: string,
-  declarations: Object | any,
-  linkDeclarations?: boolean
+  definitions: Object | any,
+  linkDefinitions?: boolean
 ) {
-  let declarationTable: any = ''
-  Object.keys(declarations).map((key) => {
-    if (declarations[key].remoteScope) return
+  let definitionTable: any = ''
+  Object.keys(definitions).map((key) => {
+    if (definitions[key].remoteScope || key === 'LinkedMarkdown') return
 
-    declarationTable += `<tr id="Declaration/${formatDeclarationPath(
+    definitionTable += `<tr id="Definition/${formatDefinitionPath(
       key,
-      declarations[key].pkgVersionURI
+      definitions[key].pkgVersionURI
     )}"><td>${
-      !linkDeclarations
+      !linkDefinitions
         ? key
         : `<a style="cursor: pointer" ${LMLinkAction({
-            uri: `${declarations[key].pkgVersionURI}#${key}`,
+            uri: `${definitions[key].pkgVersionURI}#${key}`,
           })}>${key}</a>`
-    }</td><td>${formatDeclarations(
-      declarations,
-      formatValue(declarations[key].value).toString(),
-      declarations[key].pkgVersionURI,
+    }</td><td>${formatDefinitions(
+      definitions,
+      formatValue(definitions[key].value).toString(),
+      definitions[key].pkgVersionURI,
       true
     )}</td></tr>`
   })
-  return `<h4>${name} declarations</h4><table class="LM-table">
-  ${declarationTable}</table>`
+  return `<h4>${name} definitions</h4><table class="LM-table">
+  ${definitionTable}</table>`
 }
 
-function wrap(declarations: Object | any, contents: string): string {
+function wrap(definitions: Object | any, contents: string): string {
   return `${
-    Object.keys(declarations.imported).length > 0
-      ? createDeclarationsTable('Imported', declarations.imported, true)
+    Object.keys(definitions.imported).length > 0
+      ? createDefinitionsTable('Imported', definitions.imported, true)
       : ''
   }${
-    Object.keys(declarations.local).length > 0
-      ? createDeclarationsTable('Local', declarations.local)
+    Object.keys(definitions.local).length > 0
+      ? createDefinitionsTable('Local', definitions.local)
       : ''
-  }${formatDeclarations(declarations.all, contents)}`
+  }${formatDefinitions(definitions.all, contents)}`
 }
 
 async function parse(file: string): Promise<LinkedMarkdownFile> {
@@ -281,23 +280,23 @@ async function parse(file: string): Promise<LinkedMarkdownFile> {
     error("File doesn't have the required three sections")
     return {
       imports: [],
-      declarations: { imported: [], local: [], all: [] },
+      definitions: { imported: [], local: [], all: [] },
       contents: '',
     }
   }
-  const importedDeclarations = await resolveImports(splitFile[0])
-  const rawLocalDeclarations: any = yaml.load(splitFile[1])
-  const localDeclarations: Declarations = {}
-  Object.keys(rawLocalDeclarations).map((name: string) => {
-    localDeclarations[name] = { value: rawLocalDeclarations[name] }
+  const importedDefinitions = await resolveImports(splitFile[0])
+  const rawLocalDefinitions: any = yaml.load(splitFile[1])
+  const localDefinitions: Definitions = {}
+  Object.keys(rawLocalDefinitions).map((name: string) => {
+    localDefinitions[name] = { value: rawLocalDefinitions[name] }
   })
-  const declarations = Object.assign(localDeclarations, importedDeclarations)
+  const definitions = Object.assign(localDefinitions, importedDefinitions)
   const parsedFile: LinkedMarkdownFile = {
     imports: parseImports(splitFile[0]),
-    declarations: {
-      imported: importedDeclarations,
-      local: localDeclarations,
-      all: declarations,
+    definitions: {
+      imported: importedDefinitions,
+      local: localDefinitions,
+      all: definitions,
     },
     contents: splitFile[2],
   }
@@ -318,6 +317,6 @@ export class LinkedMarkdown {
   }
 
   toHTML() {
-    return marked.parse(wrap(this.data.declarations, this.data.contents))
+    return marked.parse(wrap(this.data.definitions, this.data.contents))
   }
 }

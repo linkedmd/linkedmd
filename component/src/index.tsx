@@ -47,7 +47,6 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
 
         try {
           const newFileURI = JSON.parse(unescape(event.data)).lmURI
-          console.log(newFileURI)
           fetchAndSet(newFileURI, true)
         } catch (e) {}
       },
