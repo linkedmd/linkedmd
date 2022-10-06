@@ -43,7 +43,7 @@ This below is a Linked Markdown document, go play with it!
 
 const App = () => {
   const startFileURI =
-    'http://localhost:8000/examples/DomainAgreement.linked.md'
+    'https://raw.githubusercontent.com/linkedmd/linkedmd/main/parser/examples/DomainAgreement.linked.md'
   const [edit, setEdit] = useState(false)
   const [fileURI, setFileURI] = useState(startFileURI)
 
