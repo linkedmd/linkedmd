@@ -1,15 +1,16 @@
 const VARIABLE_REGEX = /\[%(.*?)\]/g
 const IPFS_GATEWAY = 'ipfs.nftstorage.link'
+const CSS = '<style>dt:target a { outline: 2px solid yellow }</style>'
 
 import fetch from 'cross-fetch'
 import MarkdownIt from 'markdown-it'
 // @ts-ignore
 import MarkdownItDefList from 'markdown-it-deflist'
 // @ts-ignore
-import MarkdownItAbbr from 'markdown-it-abbr'
+import MarkdownItAbbr from '@linkedmd/markdown-it-abbr'
 import MarkdownItAttrs from 'markdown-it-attrs'
 // @ts-ignore
-import MarkdownItDirective from 'markdown-it-directive'
+import MarkdownItDirective from '@linkedmd/markdown-it-directive'
 import { markdownItFancyListPlugin } from 'markdown-it-fancy-lists'
 
 const arrayToObject = (array: Array<any>, key: string): any => {
@@ -208,6 +209,6 @@ export class LinkedMarkdown {
           ].lm.toHTML(attrs)
         }
       })
-    return md.render(this.toMarkdown(overrideDefinitions))
+    return CSS + md.render(this.toMarkdown(overrideDefinitions))
   }
 }

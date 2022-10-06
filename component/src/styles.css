@@ -1,4 +1,5 @@
-@import "https://unpkg.com/style.css/style.css";
+
+@import "https://unpkg.com/tippy.js@6.3.7/dist/tippy.css";
 
 :global(.LM-split-screen) {
   display: flex;
@@ -25,7 +26,7 @@
   overflow-wrap: break-word;
 }
 
-textarea {
+:global(textarea.LM-input) {
   padding: 1rem;
   height: 100vh !important;
 }
@@ -33,9 +34,4 @@ textarea {
 :global(.LM-dec) span {
   font-size: 75%;
   color: black;
-}
-
-[data-tooltip]:before {
-  font-size: 1rem;
-  line-height: 1.25rem;
 }

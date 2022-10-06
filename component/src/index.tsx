@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { LinkedMarkdown } from '@linkedmd/parser'
 import './styles.css'
-import 'process'
+import tippy, { inlinePositioning } from 'tippy.js'
+import 'tippy.js/dist/tippy.css'
 
 const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs'
 
@@ -16,6 +17,17 @@ const fetchAndParse = async (fileURI: string) => {
   return { file, parser }
 }
 
+const loadTooltips = () => {
+  // @ts-ignore
+  tippy('abbr[title]', {
+    // @ts-ignore
+    content: (ref) => ref.getAttribute('title'),
+    placement: 'bottom',
+    inlinePositioning: true,
+    plugins: [inlinePositioning],
+  })
+}
+
 type FileURICallback = (newFileURI: string) => any
 
 interface Props {
@@ -28,30 +40,18 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const fetchAndSet = async (newFileURI: string, addToStack: boolean) => {
+  const fetchAndSet = async (newFileURI: string, addToStack?: boolean) => {
     setLoading(true)
     const { parser } = await fetchAndParse(newFileURI)
     setOutput(parser.toHTML() || '')
     addToStack && setFileStack((fileStack) => [...fileStack, newFileURI])
     onFileURIChange && onFileURIChange(newFileURI)
     setLoading(false)
+    setTimeout(loadTooltips)
   }
 
   useEffect(() => {
-    fetchAndSet(fileURI, true)
-
-    window.addEventListener(
-      'message',
-      (event) => {
-        if (event.origin !== window.location.origin) return
-
-        try {
-          const newFileURI = JSON.parse(unescape(event.data)).lmURI
-          fetchAndSet(newFileURI, true)
-        } catch (e) {}
-      },
-      false
-    )
+    fetchAndSet(fileURI)
   }, [])
 
   async function goBack() {
@@ -96,6 +96,7 @@ export const LinkedMarkdownEditor = ({ fileURI }: Props) => {
     const parser = new LinkedMarkdown(input)
     parser.parse().then(() => {
       setOutput(parser.toHTML())
+      setTimeout(loadTooltips, 500)
     })
     input !== '' && localStorage.setItem('saved-input', input)
   }, [input])

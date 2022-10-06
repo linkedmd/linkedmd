@@ -2,6 +2,18 @@
 # yarn lockfile v1
 
 
+"@linkedmd/markdown-it-abbr@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@linkedmd/markdown-it-abbr/-/markdown-it-abbr-1.0.5.tgz#248301f8b840fa2261610a20bbfa8f0e3e589282"
+  integrity sha512-4JApL4zbwOyr+qOAh7H68sQhG+QCMsZHpfwic7e3x8Tqg/OYaEqJsEZOPVBarv/xUCdCDrUYrNJtkZcEzfNG3A==
+
+"@linkedmd/markdown-it-directive@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@linkedmd/markdown-it-directive/-/markdown-it-directive-1.0.1.tgz#a5804352aee3bdd2e7cd06544cf7aa235aba8013"
+  integrity sha512-57sL3dCymeVXCC1rmQhccayi9I/kBt0KQEnaIR3c3zGYc0uxJtdvoZk21md1d6uIHswO1IEQkBrClBwe4d/+Ew==
+  dependencies:
+    markdown-it "^10.0.0"
+
 "@types/linkify-it@*":
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/@types/linkify-it/-/linkify-it-3.0.2.tgz#fd2cd2edbaa7eaac7e7f3c1748b52a19143846c9"
