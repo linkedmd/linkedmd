@@ -34,14 +34,11 @@ async function fetchPackageVersion(uri: string): Promise<string> {
   const parsedURI = new URL(uri)
   if (parsedURI.protocol === 'ipfs:') {
     // Blink, Gecko and WebKit parse URLs differently
-    let cid =
+    const cid =
       parsedURI.hostname !== ''
         ? parsedURI.hostname
         : parsedURI.pathname.slice(2)
-    console.log(cid)
-    if (cid.indexOf('#') !== -1) cid = cid.split('#')[0]
     uri = `https://${cid}.${IPFS_GATEWAY}`
-    console.log(uri)
   }
 
   try {
