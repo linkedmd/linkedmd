@@ -47,7 +47,7 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
     addToStack && setFileStack((fileStack) => [...fileStack, newFileURI])
     onFileURIChange && onFileURIChange(newFileURI)
     setLoading(false)
-    setTimeout(loadTooltips)
+    setTimeout(loadTooltips, 500)
   }
 
   useEffect(() => {

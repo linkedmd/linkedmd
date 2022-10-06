@@ -1,6 +1,4 @@
 
-@import "https://unpkg.com/tippy.js@6.3.7/dist/tippy.css";
-
 :global(.LM-split-screen) {
   display: flex;
   flex-direction: row;
