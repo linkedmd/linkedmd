@@ -1,6 +1,3 @@
-Designated Blockchain, Token
-: Import definitions http://localhost:8000/examples/EthereumPrimitives.linked.md
-
 NATION
 : ERC20 Token living in the Designated Blockchain at address [%Address]
 
