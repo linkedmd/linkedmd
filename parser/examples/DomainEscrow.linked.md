@@ -1,5 +1,5 @@
 NATION
-: Import definitions ipfs://bafkreieuq5xjvtmwn4fmjnode6c3dhkjh3m7vy6c3bs3o6h6xfruzknymu
+: Import definitions ipfs://bafkreieuq5xjvtmwn4fmjnode6c3dhkjh3m7vy6c3bs3o6h6xfruzknymu#NATION#luisc.eth
 
 Domain Name
 : google.com
