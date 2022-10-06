@@ -1,9 +1,11 @@
 {
   "name": "@linkedmd/parser",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "index.js",
   "type": "module",
   "dependencies": {
+    "@linkedmd/markdown-it-abbr": "^1.0.5",
+    "@linkedmd/markdown-it-directive": "^1.0.1",
     "cross-fetch": "^3.1.5",
     "markdown-it": "^13.0.1",
     "markdown-it-abbr": "^1.0.4",
