@@ -167,7 +167,7 @@ export class LinkedMarkdown {
     defList += '---\n'
 
     const content = replaceVariables(
-      this.input.slice(this.input.indexOf('---')),
+      this.input.slice(this.input.indexOf('---') + 3),
       this.definitions
     )
 
