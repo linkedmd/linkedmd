@@ -15,21 +15,6 @@
   flex-direction: column;
 }
 
-:global(.LM-table) {
-  display: table;
-  table-layout: fixed;
-}
-
-:global(.LM-table tr) {
-  overflow-wrap: break-word;
-}
-
 :global(textarea.LM-input) {
   padding: 1rem;
-  height: 100vh !important;
-}
-
-:global(.LM-dec) span {
-  font-size: 75%;
-  color: black;
 }
