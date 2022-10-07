@@ -5,13 +5,7 @@ const CSS = '<style>dt:target a { outline: 2px solid yellow }</style>'
 import fetch from 'cross-fetch'
 import MarkdownIt from 'markdown-it'
 // @ts-ignore
-import MarkdownItDefList from 'markdown-it-deflist'
-// @ts-ignore
-import MarkdownItAbbr from '@linkedmd/markdown-it-abbr'
-import MarkdownItAttrs from 'markdown-it-attrs'
-// @ts-ignore
-import MarkdownItDirective from '@linkedmd/markdown-it-directive'
-import { markdownItFancyListPlugin } from 'markdown-it-fancy-lists'
+import plugins from './plugins.js'
 
 const arrayToObject = (array: Array<any>, key: string): any => {
   const initialValue = {}
@@ -172,7 +166,7 @@ export class LinkedMarkdown {
     defList += '---\n'
 
     const content = replaceVariables(
-      this.input.slice(this.input.indexOf('---') + 1),
+      this.input.slice(this.input.indexOf('---')),
       this.definitions
     )
 
@@ -190,25 +184,23 @@ export class LinkedMarkdown {
       typographer: true,
       quotes: '“”‘’',
     })
-    md.use(MarkdownItDefList)
-      .use(MarkdownItAbbr)
-      .use(MarkdownItAttrs)
-      .use(MarkdownItDirective)
-      // @ts-ignore
-      .use(markdownItFancyListPlugin)
-      .use((md: any) => {
-        md.inlineDirectives['include'] = (
-          state: any,
-          content: any,
-          dests: any,
-          attrs: any
-        ) => {
-          const token = state.push('html_inline', '', 0)
-          token.content = arrayToObject(this.imports, 'default')[
-            content
-          ].lm.toHTML(attrs)
-        }
-      })
+
+    plugins.map((plug: any) => md.use(plug[0], plug[1]))
+
+    md.use((md: any) => {
+      md.inlineDirectives['include'] = (
+        state: any,
+        content: any,
+        dests: any,
+        attrs: any
+      ) => {
+        const token = state.push('html_inline', '', 0)
+        token.content = arrayToObject(this.imports, 'default')[
+          content
+        ].lm.toHTML(attrs)
+      }
+    })
+
     return CSS + md.render(this.toMarkdown(overrideDefinitions))
   }
 }
