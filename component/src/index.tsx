@@ -3,6 +3,7 @@ import { LinkedMarkdown } from '@linkedmd/parser'
 import './styles.css'
 import tippy, { inlinePositioning } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
+import TextareaAutosize from 'react-textarea-autosize'
 
 const IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs'
 
@@ -117,7 +118,12 @@ export const LinkedMarkdownEditor = ({ fileURI }: Props) => {
 
   return (
     <div className="LM-split-screen">
-      <textarea className="LM-input" onChange={handleInput} value={input} />
+      <TextareaAutosize
+        className="LM-input"
+        onChange={handleInput}
+        value={input}
+        autoFocus
+      />
       <div className="LM-output" dangerouslySetInnerHTML={{ __html: output }} />
     </div>
   )
