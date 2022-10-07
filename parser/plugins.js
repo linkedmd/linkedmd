@@ -29,9 +29,10 @@ export default [
     {
       permalink: MarkdownItAnchor.permalink.linkInsideHeader({
         symbol: '§',
-        placement: 'before',
+        placement: 'after',
       }),
+      level: 2,
     },
   ],
-  [MarkdownItTOC],
+  [MarkdownItTOC, { level: 2 }],
 ]
