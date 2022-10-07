@@ -1,6 +1,6 @@
 {
   "name": "@linkedmd/components",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "React component to embed Linked Markdown files",
   "author": "Nation3",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "react": "^16.0.0"
   },
   "devDependencies": {
-    "@linkedmd/parser": "^0.2.3",
+    "@linkedmd/parser": "^0.2.4",
     "@types/node": "^12.12.38",
     "@types/react": "^16.9.27",
     "@types/react-dom": "^16.9.7",
