@@ -1494,10 +1494,10 @@
   dependencies:
     markdown-it "^10.0.0"
 
-"@linkedmd/parser@^0.2.5":
-  version "0.2.5"
-  resolved "https://registry.yarnpkg.com/@linkedmd/parser/-/parser-0.2.5.tgz#6660a710cb75b8c10118af89df90af819b16f9ae"
-  integrity sha512-GSkOnsgIzW6gciWKiL6SZy1Vnvvt2k+7B9MTgl0hgpHzhhtZKr+plXNIcgSpYxYf6aArK+Qc/OyiZJC2wpnDKg==
+"@linkedmd/parser@^0.2.6":
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/@linkedmd/parser/-/parser-0.2.6.tgz#c1e926e9307bde558cea5461a3074a880022e8ff"
+  integrity sha512-2mbw+jo1eTCCqv6GNaG6EWJ7nAKmzKBqD786bfBK8sSLhp/B8NEleIxazdTjCpVkvSNE2apYwM3SsJlhd4uoow==
   dependencies:
     "@linkedmd/markdown-it-abbr" "^1.0.5"
     "@linkedmd/markdown-it-directive" "^1.0.1"
