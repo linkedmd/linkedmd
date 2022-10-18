@@ -55,6 +55,10 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
     fetchAndSet(fileURI)
   }, [])
 
+  useEffect(() => {
+    fetchAndSet(fileURI)
+  }, [fileURI])
+
   async function goBack() {
     await fetchAndSet(fileStack[fileStack.length - 2], false)
     setFileStack(fileStack.slice(0, -1))

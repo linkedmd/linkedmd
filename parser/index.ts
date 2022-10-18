@@ -1,5 +1,6 @@
 const VARIABLE_REGEX = /\[%(.*?)\]/g
 const IPFS_GATEWAY = 'ipfs.nftstorage.link'
+const DEFAULT_VIEWER = 'http://localhost:3000/v?u='
 const CSS =
   '<style scoped>dt:targeta{outline:2pxsolidyellow}body{counter-reset:h1counterh2counterh3counterh4counterh5counterh6counter;}h1{counter-reset:h2counter;}h2{counter-reset:h3counter;}h3{counter-reset:h4counter;}h4{counter-reset:h5counter;}h5{counter-reset:h6counter;}h6{}h2:before{counter-increment:h2counter;content:counter(h2counter)".\\0000a0\\0000a0";}h3:before{counter-increment:h3counter;content:counter(h2counter)"."counter(h3counter)".\\0000a0\\0000a0";}h4:before{counter-increment:h4counter;content:counter(h2counter)"."counter(h3counter)"."counter(h4counter)".\\0000a0\\0000a0";}h5:before{counter-increment:h5counter;content:counter(h2counter)"."counter(h3counter)"."counter(h4counter)"."counter(h5counter)".\\0000a0\\0000a0";}h6:before{counter-increment:h6counter;content:counter(h2counter)"."counter(h3counter)"."counter(h4counter)"."counter(h5counter)"."counter(h6counter)".\\0000a0\\0000a0";}body { scroll-behavior: smooth; }.table-of-contents ol { counter-reset: items; }.table-of-contents li { display: block; counter-increment: items; }.table-of-contents li:before { content: counters(items,".") ". "; }.table-of-contents > ol { padding-left: 0 !important; }</style>'
 
@@ -25,25 +26,6 @@ const replaceVariables = (text: string, definitions: any): string => {
   return text
 }
 
-async function fetchPackageVersion(uri: string): Promise<string> {
-  const parsedURI = new URL(uri)
-  if (parsedURI.protocol === 'ipfs:') {
-    // Blink, Gecko and WebKit parse URLs differently
-    const cid =
-      parsedURI.hostname !== ''
-        ? parsedURI.hostname
-        : parsedURI.pathname.slice(2)
-    uri = `https://${cid}.${IPFS_GATEWAY}`
-  }
-
-  try {
-    return (await fetch(uri)).text()
-  } catch (e) {
-    Error(`Fetching package version was impossible (URI ${uri})`)
-    return ''
-  }
-}
-
 type Import = {
   default?: string
   named?: Array<{
@@ -62,17 +44,47 @@ type RemoteDefinitions = {
   [name: string]: { value: string; from: string }
 }
 
+type ParserParams = {
+  ipfsGateway: string
+  viewer: string
+}
+
 export class LinkedMarkdown {
   input: string
   imports: Import[]
   definitions: Definitions
   remoteDefinitions: RemoteDefinitions
+  definitionNames: { [key: string]: string }
+  params: ParserParams = {
+    ipfsGateway: IPFS_GATEWAY,
+    viewer: DEFAULT_VIEWER,
+  }
 
-  constructor(input: string) {
+  constructor(input: string, params?: ParserParams) {
     this.input = input
     this.imports = [] as Import[]
     this.definitions = {}
     this.remoteDefinitions = {} as RemoteDefinitions
+    this.definitionNames = {}
+  }
+
+  async fetchPackageVersion(uri: string): Promise<string> {
+    const parsedURI = new URL(uri)
+    if (parsedURI.protocol === 'ipfs:') {
+      // Blink, Gecko and WebKit parse URLs differently
+      const cid =
+        parsedURI.hostname !== ''
+          ? parsedURI.hostname
+          : parsedURI.pathname.slice(2)
+      uri = `https://${cid}.${this.params.ipfsGateway}`
+    }
+
+    try {
+      return (await fetch(uri)).text()
+    } catch (e) {
+      Error(`Fetching package version was impossible (URI ${uri})`)
+      return ''
+    }
   }
 
   async parse() {
@@ -109,7 +121,7 @@ export class LinkedMarkdown {
             from: value.replace('Import ', ''),
           }
         }
-        const file = await fetchPackageVersion(importObj.from)
+        const file = await this.fetchPackageVersion(importObj.from)
         importObj.lm = new LinkedMarkdown(file)
         await importObj.lm.parse()
         return importObj
@@ -130,6 +142,7 @@ export class LinkedMarkdown {
       importObj.named.map((namedImport: any) => {
         this.definitions[namedImport.localName] =
           importObj.lm.definitions[namedImport.remoteName]
+        this.definitionNames[namedImport.localName] = namedImport.remoteName
       })
       Object.keys(importObj.lm.definitions).map((key: string) => {
         this.remoteDefinitions[key] = {
@@ -156,7 +169,15 @@ export class LinkedMarkdown {
     let defList = ''
     let abbrList = ''
     Object.keys(this.definitions).map((name) => {
-      defList += `${name} {#${encodeURI(name)}}\n: ${
+      const importedFrom: string =
+        this.definitionNames[name] &&
+        this.remoteDefinitions[this.definitionNames[name]].from
+      const imported: string = importedFrom
+        ? `([imported](${this.params.viewer}${importedFrom}#${encodeURI(
+            this.definitionNames[name]
+          )}))`
+        : ''
+      defList += `${name} ${imported} {#${encodeURI(name)}}\n: ${
         this.definitions[name]
       }\n\n`
       abbrList += `*[${name}]: ${this.definitions[name]}\n`
