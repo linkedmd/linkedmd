@@ -26,6 +26,9 @@ const replaceVariables = (text: string, definitions: any): string => {
   return text
 }
 
+const logError = (msg: string) =>
+  console.error(`Linked Markdown parser: ${msg}`)
+
 type Import = {
   default?: string
   named?: Array<{
@@ -169,9 +172,13 @@ export class LinkedMarkdown {
     let defList = ''
     let abbrList = ''
     Object.keys(this.definitions).map((name) => {
+      if (!this.definitions[name]) {
+        logError(`A definition for ${name} couldn't be found`)
+        return null
+      }
       const importedFrom: string =
         this.definitionNames[name] &&
-        this.remoteDefinitions[this.definitionNames[name]].from
+        this.remoteDefinitions[this.definitionNames[name]]?.from
       const imported: string = importedFrom
         ? `([imported](${this.params.viewer}${importedFrom}#${encodeURI(
             this.definitionNames[name]
