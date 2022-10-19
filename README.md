@@ -1,4 +1,4 @@
-# Linked Markdown
+# Linked Markdown ⍈
 
 Linked Markdown is a superset of [Markdown](https://daringfireball.net/projects/markdown/syntax) that provides support for declaring variables, referencing them and importing them from remote sources.
 
