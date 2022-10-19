@@ -1,5 +1,7 @@
 // Must-have plugins
 // @ts-ignore
+import MarkdownItCollapsible from 'markdown-it-collapsible'
+// @ts-ignore
 import MarkdownItDefList from 'markdown-it-deflist'
 // @ts-ignore
 import MarkdownItAbbr from '@linkedmd/markdown-it-abbr'
@@ -18,6 +20,7 @@ import MarkdownItAnchor from 'markdown-it-anchor'
 import MarkdownItTOC from 'markdown-it-toc-done-right'
 
 export default [
+  [MarkdownItCollapsible],
   [MarkdownItDefList],
   [MarkdownItAbbr],
   [MarkdownItAttrs],

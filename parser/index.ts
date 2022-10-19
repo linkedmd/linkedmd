@@ -169,7 +169,7 @@ export class LinkedMarkdown {
       this.definitions = Object.assign(this.definitions, overrideDefinitions)
     }
 
-    let defList = ''
+    let defList = '+++ Definitions\n '
     let abbrList = ''
     Object.keys(this.definitions).map((name) => {
       if (!this.definitions[name]) {
@@ -192,7 +192,7 @@ export class LinkedMarkdown {
     Object.keys(this.remoteDefinitions).map((name) => {
       abbrList += `*[${name}]: ${this.remoteDefinitions[name].value} | ${this.remoteDefinitions[name].from}\n`
     })
-    defList += '---\n'
+    defList += '+++\n---\n'
 
     const content = replaceVariables(
       this.input.slice(this.input.indexOf('---') + 3),
@@ -231,7 +231,24 @@ export class LinkedMarkdown {
     })
 
     return (
-      '<div>' + CSS + md.render(this.toMarkdown(overrideDefinitions)) + '</div>'
+      '<div>' +
+      CSS +
+      md.render(this.toMarkdown(overrideDefinitions)) +
+      '</div>' +
+      `<script>
+        function openTarget() {
+          const hash = location.hash.substring(1)
+          if (hash) {
+            const target = document.getElementById(hash)
+            if (target) {
+              const details = target.closest('details')
+              if (details)
+                details.open = true;
+            }
+          }
+      }
+      openTarget();
+      window.addEventListener('hashchange', openTarget);</script>`
     )
   }
 }
