@@ -41,6 +41,18 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
   const [output, setOutput] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const openDefinitionsCollapsible = () => {
+    const hash = location.hash.substring(1)
+    if (hash) {
+      const target = document.getElementById(hash)
+      if (target) {
+        const details = target.closest('details')
+        if (details) details.open = true
+      }
+    }
+  }
+  window.addEventListener('hashchange', openDefinitionsCollapsible)
+
   const fetchAndSet = async (newFileURI: string, addToStack?: boolean) => {
     setLoading(true)
     const { parser } = await fetchAndParse(newFileURI)
@@ -49,6 +61,7 @@ export const LinkedMarkdownViewer = ({ fileURI, onFileURIChange }: Props) => {
     onFileURIChange && onFileURIChange(newFileURI)
     setLoading(false)
     setTimeout(loadTooltips, 500)
+    openDefinitionsCollapsible()
   }
 
   useEffect(() => {
