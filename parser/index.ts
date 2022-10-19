@@ -2,7 +2,7 @@ const VARIABLE_REGEX = /\[%(.*?)\]/g
 const IPFS_GATEWAY = 'ipfs.nftstorage.link'
 const DEFAULT_VIEWER = 'https://linked.md/v?u='
 const CSS =
-  '<style scoped>@import url("https://cdn.jsdelivr.net/npm/@linkedmd/parser/styles.css")</style>'
+  '<style scoped>@import url("https://cdn.jsdelivr.net/npm/@linkedmd/parser@0.3.3/styles.css")</style>'
 
 import fetch from 'cross-fetch'
 import MarkdownIt from 'markdown-it'
