@@ -53,7 +53,7 @@ h6:before {
 	content: counter(h2counter)"." counter(h3counter)"." counter(h4counter)"." counter(h5counter)"." counter(h6counter)".\0000a0\0000a0";
 }
 
-dl {
+dl, section.footnotes {
   overflow-wrap: break-word;
 }
 
