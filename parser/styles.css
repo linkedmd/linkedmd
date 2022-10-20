@@ -53,6 +53,10 @@ h6:before {
 	content: counter(h2counter)"." counter(h3counter)"." counter(h4counter)"." counter(h5counter)"." counter(h6counter)".\0000a0\0000a0";
 }
 
+dl {
+  overflow-wrap: break-word;
+}
+
 .table-of-contents ol {
 	counter-reset: items;
 }

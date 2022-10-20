@@ -2,7 +2,7 @@ const VARIABLE_REGEX = /\[%(.*?)\]/g
 const IPFS_GATEWAY = 'ipfs.nftstorage.link'
 const DEFAULT_VIEWER = 'https://linked.md/v?u='
 const CSS =
-  '<style scoped>@import url("https://cdn.jsdelivr.net/npm/@linkedmd/parser@0.3.3/styles.css")</style>'
+  '<style scoped>@import url("https://cdn.jsdelivr.net/npm/@linkedmd/parser@0.3.4/styles.css")</style>'
 
 import fetch from 'cross-fetch'
 import MarkdownIt from 'markdown-it'
@@ -192,7 +192,7 @@ export class LinkedMarkdown {
     Object.keys(this.remoteDefinitions).map((name) => {
       abbrList += `*[${name}]: ${this.remoteDefinitions[name].value} | ${this.remoteDefinitions[name].from}\n`
     })
-    defList += '+++\n---\n'
+    defList += '+++\n'
 
     const content = replaceVariables(
       this.input.slice(this.input.indexOf('---') + 3),
