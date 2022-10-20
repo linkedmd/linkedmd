@@ -8,6 +8,8 @@ import fetch from 'cross-fetch'
 import MarkdownIt from 'markdown-it'
 // @ts-ignore
 import plugins from './plugins.js'
+// @ts-ignore
+import MarkdownItDirective from '@linkedmd/markdown-it-directive'
 
 const arrayToObject = (array: Array<any>, key: string): any => {
   const initialValue = {}
@@ -190,7 +192,7 @@ export class LinkedMarkdown {
       abbrList += `*[${name}]: ${this.definitions[name]}\n`
     })
     Object.keys(this.remoteDefinitions).map((name) => {
-      abbrList += `*[${name}]: ${this.remoteDefinitions[name].value} | ${this.remoteDefinitions[name].from}\n`
+      abbrList += `*[${name}]: ${this.remoteDefinitions[name].value}\n`
     })
     defList += '+++\n'
 
@@ -214,8 +216,7 @@ export class LinkedMarkdown {
       quotes: '“”‘’',
     })
 
-    plugins.map((plug: any) => md.use(plug[0], plug[1]))
-
+    md.use(MarkdownItDirective)
     md.use((md: any) => {
       md.inlineDirectives['include'] = (
         state: any,
@@ -229,6 +230,8 @@ export class LinkedMarkdown {
         ].lm.toHTML(attrs)
       }
     })
+
+    plugins.map((plug: any) => md.use(plug[0], plug[1]))
 
     return (
       '<div>' + CSS + md.render(this.toMarkdown(overrideDefinitions)) + '</div>'
