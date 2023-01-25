@@ -16,7 +16,7 @@ export default [
   [MarkdownItDefList],
   [MarkdownItAbbr],
   [MarkdownItAttrs],
-  //[MarkdownItDirective],
+  [MarkdownItDirective],
   [markdownItFancyListPlugin],
   [MarkdownItFootnote],
   [

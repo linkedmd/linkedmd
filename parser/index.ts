@@ -216,7 +216,8 @@ export class LinkedMarkdown {
       quotes: '“”‘’',
     })
 
-    md.use(MarkdownItDirective)
+    plugins.map((plug: any) => md.use(plug[0], plug[1]))
+
     md.use((md: any) => {
       md.inlineDirectives['include'] = (
         state: any,
@@ -230,8 +231,6 @@ export class LinkedMarkdown {
         ].lm.toHTML(attrs)
       }
     })
-
-    plugins.map((plug: any) => md.use(plug[0], plug[1]))
 
     return (
       '<div>' + CSS + md.render(this.toMarkdown(overrideDefinitions)) + '</div>'
